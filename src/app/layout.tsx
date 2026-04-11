@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+﻿import type { Metadata } from 'next';
 import { Cormorant_Garamond, IBM_Plex_Sans } from 'next/font/google';
 import './globals.css';
 
@@ -15,8 +15,8 @@ const bodyFont = IBM_Plex_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'WhatsMenu | Conexão Evolution',
-  description: 'Painel interno para conectar o WhatsApp do restaurante pela Evolution API.',
+  title: 'WhatsMenu | Onboarding do Restaurante',
+  description: 'Cadastro da empresa e conexão do WhatsApp do restaurante pela Evolution API.',
 };
 
 export default function RootLayout({

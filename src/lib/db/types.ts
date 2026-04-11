@@ -11,6 +11,9 @@ export interface Tenant {
     id: string;
     slug: string;
     name: string;
+    cpf: string | null;
+    cnpj: string | null;
+    logoUrl: string | null;
     acceptsCard: boolean;
     cardBrands: string[];
     acceptsVoucher: boolean;

@@ -5,6 +5,9 @@ type TenantRow = {
     id: string;
     slug: string;
     name: string;
+    cpf: string | null;
+    cnpj: string | null;
+    logoUrl: string | null;
     acceptsCard: boolean;
     cardBrands: string[];
     acceptsVoucher: boolean;
@@ -40,6 +43,9 @@ function mapTenant(row: TenantRow): Tenant {
         id: row.id,
         slug: row.slug,
         name: row.name,
+        cpf: row.cpf,
+        cnpj: row.cnpj,
+        logoUrl: row.logoUrl,
         acceptsCard: row.acceptsCard,
         cardBrands: row.cardBrands,
         acceptsVoucher: row.acceptsVoucher,
@@ -74,6 +80,9 @@ const tenantSelect = sql`
     id,
     slug,
     name,
+    cpf,
+    cnpj,
+    logo_url             as "logoUrl",
     accepts_card         as "acceptsCard",
     card_brands          as "cardBrands",
     accepts_voucher      as "acceptsVoucher",
@@ -115,6 +124,126 @@ export async function getTenantBySlug(slug: string): Promise<Tenant | null> {
         select ${tenantSelect} from tenants where slug = ${slug} limit 1
     `;
     return rows[0] ? mapTenant(rows[0]) : null;
+}
+
+export async function createTenant(input: {
+    slug: string;
+    name: string;
+    cpf?: string;
+    cnpj?: string;
+    logoUrl?: string;
+    whatsappCustomerNumber?: string;
+    whatsappAdminNumber?: string;
+    addrStreet?: string;
+    addrNumber?: string;
+    addrNeighborhood?: string;
+    addrZip?: string;
+    addrCity?: string;
+    addrState?: string;
+    deliveryEnabled?: boolean;
+    deliveryFee?: number;
+    deliveryFarNeighborhoods?: boolean;
+    deliveryNeighborhoods?: string[];
+    waitingTimeMinutes?: number;
+    acceptsCard?: boolean;
+    cardBrands?: string[];
+    acceptsVoucher?: boolean;
+    voucherBrands?: string[];
+    issuesNfCpf?: boolean;
+    pixKey?: string;
+}): Promise<Tenant> {
+    const rows = await sql<TenantRow[]>`
+        insert into tenants (
+            slug,
+            name,
+            cpf,
+            cnpj,
+            logo_url,
+            whatsapp_customer_number,
+            whatsapp_admin_number,
+            addr_street,
+            addr_number,
+            addr_neighborhood,
+            addr_zip,
+            addr_city,
+            addr_state,
+            delivery_enabled,
+            delivery_fee,
+            delivery_far_neighborhoods,
+            delivery_neighborhoods,
+            waiting_time_minutes,
+            accepts_card,
+            card_brands,
+            accepts_voucher,
+            voucher_brands,
+            issues_nf_cpf,
+            pix_key
+        )
+        values (
+            ${input.slug},
+            ${input.name},
+            ${input.cpf ?? null},
+            ${input.cnpj ?? null},
+            ${input.logoUrl ?? null},
+            ${input.whatsappCustomerNumber ?? null},
+            ${input.whatsappAdminNumber ?? null},
+            ${input.addrStreet ?? null},
+            ${input.addrNumber ?? null},
+            ${input.addrNeighborhood ?? null},
+            ${input.addrZip ?? null},
+            ${input.addrCity ?? null},
+            ${input.addrState ?? null},
+            ${input.deliveryEnabled ?? true},
+            ${input.deliveryFee ?? 0},
+            ${input.deliveryFarNeighborhoods ?? false},
+            ${input.deliveryNeighborhoods ?? []},
+            ${input.waitingTimeMinutes ?? 30},
+            ${input.acceptsCard ?? false},
+            ${input.cardBrands ?? []},
+            ${input.acceptsVoucher ?? false},
+            ${input.voucherBrands ?? []},
+            ${input.issuesNfCpf ?? false},
+            ${input.pixKey ?? null}
+        )
+        returning ${tenantSelect}
+    `;
+    return mapTenant(rows[0]);
+}
+
+export async function replaceTenantHours(input: {
+    tenantId: string;
+    hours: Array<{
+        dayOfWeek: number;
+        opensAt: string;
+        closesAt: string;
+        shift?: number;
+    }>;
+}): Promise<void> {
+    await sql.begin(async (tx) => {
+        await tx`
+            delete from tenant_hours
+            where tenant_id = ${input.tenantId}
+        `;
+
+        for (const item of input.hours) {
+            await tx`
+                insert into tenant_hours (
+                    tenant_id,
+                    day_of_week,
+                    shift,
+                    opens_at,
+                    closes_at
+                )
+                values (
+                    ${input.tenantId},
+                    ${item.dayOfWeek},
+                    ${item.shift ?? 1},
+                    ${item.opensAt},
+                    ${item.closesAt}
+                )
+            `;
+        }
+    });
 }
 
 export async function getDefaultTenantForApp(): Promise<Tenant | null> {

@@ -2,6 +2,11 @@
 
 import { useEffect, useEffectEvent, useState, useTransition } from 'react';
 
+export interface ConnectTenant {
+  slug: string;
+  name: string;
+}
+
 type InstancePayload = {
   exists: boolean;
   instanceName: string;
@@ -22,7 +27,7 @@ type InstancePayload = {
 };
 
 type StatusResponse = {
-  tenant: { slug: string; name: string };
+  tenant: ConnectTenant;
   instance: InstancePayload;
 };
 
@@ -50,14 +55,20 @@ function statusTone(state: string | null): string {
   }
 }
 
-export function EvolutionConnectPanel() {
+interface EvolutionConnectPanelProps {
+  tenant: ConnectTenant;
+}
+
+export function EvolutionConnectPanel({ tenant }: EvolutionConnectPanelProps) {
   const [data, setData] = useState<StatusResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  const basePath = `/api/evolution/instances/${encodeURIComponent(tenant.slug)}`;
+
   const loadStatus = useEffectEvent(async () => {
-    const res = await fetch('/api/evolution/instance', {
+    const res = await fetch(basePath, {
       cache: 'no-store',
     });
     const payload = (await res.json()) as StatusResponse | { error: string };
@@ -71,33 +82,30 @@ export function EvolutionConnectPanel() {
     loadStatus().catch((err) => {
       setError(err instanceof Error ? err.message : String(err));
     });
-  }, [loadStatus]);
+  }, [loadStatus, tenant.slug]);
 
   useEffect(() => {
-    if (!data?.tenant.slug) return;
     const timer = window.setInterval(() => {
       loadStatus().catch(() => {
         // silent during polling
       });
     }, 8000);
     return () => window.clearInterval(timer);
-  }, [data?.tenant.slug, loadStatus]);
+  }, [loadStatus, tenant.slug]);
 
   async function runAction(
-    method: 'POST' | 'PATCH',
-    successMessage: string,
-    body?: Record<string, string>
+    path: string,
+    method: 'POST',
+    successMessage: string
   ) {
     setError(null);
     setSuccess(null);
 
     startTransition(async () => {
       try {
-        const res = await fetch('/api/evolution/instance', {
+        const res = await fetch(path, {
           method,
           cache: 'no-store',
-          headers: body ? { 'Content-Type': 'application/json' } : undefined,
-          body: body ? JSON.stringify(body) : undefined,
         });
         const payload = (await res.json()) as StatusResponse | { error: string };
         if (!res.ok) {
@@ -113,6 +121,7 @@ export function EvolutionConnectPanel() {
   }
 
   const currentState = data?.instance.connectionState ?? null;
+  const activeData = data?.tenant ? data : { tenant, instance: null };
 
   return (
     <section className="relative overflow-hidden rounded-[2rem] border border-white/12 bg-[radial-gradient(circle_at_top_left,_rgba(255,196,89,0.24),_transparent_28%),linear-gradient(160deg,rgba(27,29,39,0.92),rgba(9,11,18,0.98))] p-6 shadow-[0_30px_90px_rgba(0,0,0,0.35)] sm:p-8">
@@ -121,13 +130,13 @@ export function EvolutionConnectPanel() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl space-y-3">
             <p className="text-xs font-semibold uppercase tracking-[0.35em] text-amber-200/75">
-              Conexão WhatsApp
+              Etapa 2 · Conexão WhatsApp
             </p>
             <h1 className="font-[family:var(--font-display)] text-4xl leading-none text-white sm:text-5xl">
               Conecte o WhatsApp do restaurante em poucos cliques.
             </h1>
             <p className="max-w-xl text-sm leading-7 text-slate-300 sm:text-base">
-              O sistema já identifica o restaurante configurado, prepara a instância no backend,
+              O sistema já sabe qual restaurante está sendo configurado, prepara a instância no backend,
               gera o QR Code e acompanha o estado da sessão automaticamente.
             </p>
           </div>
@@ -135,9 +144,9 @@ export function EvolutionConnectPanel() {
             <span className="text-xs uppercase tracking-[0.28em] text-white/50">
               Como funciona
             </span>
-            <span>1. O painel carrega seu restaurante</span>
-            <span>2. Você gera o QR Code</span>
-            <span>3. Escaneia no WhatsApp e conecta</span>
+            <span>1. Gerar o QR Code</span>
+            <span>2. Escanear no WhatsApp</span>
+            <span>3. Aguardar a conexão</span>
           </div>
         </div>
 
@@ -162,12 +171,10 @@ export function EvolutionConnectPanel() {
                     Restaurante
                   </p>
                   <h2 className="mt-2 text-2xl font-semibold text-white">
-                    {data?.tenant.name ?? 'Carregando restaurante...'}
+                    {activeData.tenant.name}
                   </h2>
                   <p className="mt-1 text-sm text-slate-400">
-                    {data?.tenant.slug
-                      ? `Instância usada pelo sistema: ${data.tenant.slug}`
-                      : 'Assim que o restaurante for identificado, a conexão fica pronta para gerar o QR.'}
+                    Instância usada pelo sistema: {activeData.tenant.slug}
                   </p>
                 </div>
                 <span
@@ -182,19 +189,21 @@ export function EvolutionConnectPanel() {
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
                 <button
                   type="button"
-                  disabled={isPending || !data?.tenant.slug}
-                  onClick={() => runAction('POST', 'Instância garantida e QR Code gerado.')}
+                  disabled={isPending}
+                  onClick={() => runAction(basePath, 'POST', 'Instância garantida e QR Code gerado.')}
                   className="rounded-2xl border border-amber-300/40 bg-amber-300 px-4 py-3 font-semibold text-zinc-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Gerar QR Code
                 </button>
                 <button
                   type="button"
-                  disabled={isPending || !data?.tenant.slug}
+                  disabled={isPending}
                   onClick={() =>
-                    runAction('PATCH', 'Novo QR Code solicitado.', {
-                      action: 'refresh_qr',
-                    })
+                    runAction(
+                      `${basePath}/connect`,
+                      'POST',
+                      'Novo QR Code solicitado.'
+                    )
                   }
                   className="rounded-2xl border border-white/12 bg-white/8 px-4 py-3 font-semibold text-white transition hover:bg-white/12 disabled:cursor-not-allowed disabled:opacity-60"
                 >
@@ -202,11 +211,13 @@ export function EvolutionConnectPanel() {
                 </button>
                 <button
                   type="button"
-                  disabled={isPending || !data?.tenant.slug}
+                  disabled={isPending}
                   onClick={() =>
-                    runAction('PATCH', 'Sessão desconectada.', {
-                      action: 'disconnect',
-                    })
+                    runAction(
+                      `${basePath}/disconnect`,
+                      'POST',
+                      'Sessão desconectada.'
+                    )
                   }
                   className="rounded-2xl border border-rose-400/25 bg-rose-500/10 px-4 py-3 font-semibold text-rose-100 transition hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-60"
                 >
@@ -224,7 +235,7 @@ export function EvolutionConnectPanel() {
                   Instância
                 </p>
                 <p className="mt-3 text-lg font-semibold text-white">
-                  {data?.instance.instanceName ?? '-'}
+                  {data?.instance.instanceName ?? tenant.slug}
                 </p>
                 <p className="mt-2 text-sm text-slate-400">
                   Owner: {data?.instance.owner ?? 'ainda não conectado'}
