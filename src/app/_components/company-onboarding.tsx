@@ -563,7 +563,7 @@ export function CompanyOnboarding({ initialTenant }: CompanyOnboardingProps) {
             disabled={isPending}
             className="rounded-2xl bg-amber-300 px-6 py-4 text-base font-semibold text-zinc-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isPending ? 'Salvando cadastro...' : 'Continuar para conectar WhatsApp'}
+            {isPending ? 'Salvando cadastro...' : 'Continuar'}
           </button>
         </form>
       </div>
