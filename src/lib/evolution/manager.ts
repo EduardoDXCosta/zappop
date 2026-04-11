@@ -118,21 +118,28 @@ function mapConnectionState(payload: unknown): EvolutionConnectionState | null {
 export async function fetchInstanceByName(
   instanceName: string
 ): Promise<EvolutionInstanceSummary | null> {
-  const payload = await evolutionAdminFetch<unknown>(
-    `/instance/fetchInstances?instanceName=${encodeURIComponent(instanceName)}`
-  );
-  const root = asRecord(payload);
-  const response = root?.response;
+  try {
+    const payload = await evolutionAdminFetch<unknown>(
+      `/instance/fetchInstances?instanceName=${encodeURIComponent(instanceName)}`
+    );
+    const root = asRecord(payload);
+    const response = root?.response;
 
-  if (Array.isArray(response)) {
-    for (const item of response) {
-      const mapped = mapInstance(item);
-      if (mapped?.instanceName === instanceName) return mapped;
+    if (Array.isArray(response)) {
+      for (const item of response) {
+        const mapped = mapInstance(item);
+        if (mapped?.instanceName === instanceName) return mapped;
+      }
+      return null;
     }
-    return null;
-  }
 
-  return mapInstance(response);
+    return mapInstance(response);
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message.includes('(404)')) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 export async function createInstance(input: {
@@ -182,26 +189,40 @@ export async function connectInstance(
 export async function getConnectionState(
   instanceName: string
 ): Promise<EvolutionConnectionState | null> {
-  const payload = await evolutionAdminFetch<unknown>(
-    `/instance/connectionState/${encodeURIComponent(instanceName)}`
-  );
-  return mapConnectionState(payload);
+  try {
+    const payload = await evolutionAdminFetch<unknown>(
+      `/instance/connectionState/${encodeURIComponent(instanceName)}`
+    );
+    return mapConnectionState(payload);
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message.includes('(404)')) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 export async function getWebhookConfig(
   instanceName: string
 ): Promise<EvolutionWebhookConfig | null> {
-  const payload = await evolutionAdminFetch<unknown>(
-    `/webhook/find/${encodeURIComponent(instanceName)}`
-  );
-  const root = asRecord(payload);
-  if (!root) return null;
+  try {
+    const payload = await evolutionAdminFetch<unknown>(
+      `/webhook/find/${encodeURIComponent(instanceName)}`
+    );
+    const root = asRecord(payload);
+    if (!root) return null;
 
-  return {
-    enabled: root.enabled === true,
-    url: asString(root.url),
-    events: asStringArray(root.events),
-  };
+    return {
+      enabled: root.enabled === true,
+      url: asString(root.url),
+      events: asStringArray(root.events),
+    };
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message.includes('(404)')) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 export async function setWebhook(input: {
