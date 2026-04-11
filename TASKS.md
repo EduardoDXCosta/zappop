@@ -28,6 +28,7 @@
 
 - [ ] Testar recebimento real de mensagem via Evolution API (depende de URL/credenciais do usuário)
 - [ ] Validar atendimento completo ponta a ponta com mensagem real, tool calling e envio de resposta
+- [ ] Validar conexão real de instância via QR Code na Evolution com tenant existente
 
 ---
 
@@ -81,7 +82,7 @@
 - [ ] Criar página de cadastro do restaurante
 - [ ] Criar fluxo de escolha de plano
 - [ ] Integrar Asaas (pagamento recorrente)
-- [ ] Criar fluxo de conexão do WhatsApp (QR Code)
+- [ ] Criar fluxo de conexão do WhatsApp (QR Code) *(base interna já implementada: tela `/`, rotas `/api/evolution/instances/*`, create/connect/disconnect e refresh de QR)*
 - [ ] Criar botão de suporte com notificação WhatsApp
 - [ ] Implementar trial de 7 dias
 
@@ -126,3 +127,4 @@
 | 11/04/2026 | Schema inicial com 18 tabelas aplicando supabase-postgres-best-practices |
 | 11/04/2026 | Banco hospedado no EasyPanel (host interno `dinastia_postgres_delivery`) - migrações locais bloqueadas até haver URL externa ou deploy |
 | 11/04/2026 | FASE 2 do agente de atendimento integrada ao webhook com build de produção validado localmente |
+| 11/04/2026 | Tela interna de conexão Evolution implementada com create/connect/logout/status por slug, usando segredos apenas no backend |
