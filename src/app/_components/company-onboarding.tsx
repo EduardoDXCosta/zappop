@@ -30,6 +30,75 @@ type HoursFormRow = {
   closesAt: string;
 };
 
+interface BooleanFieldProps {
+  label: string;
+  description?: string;
+  value: boolean;
+  onChange: (next: boolean) => void;
+  trueLabel?: string;
+  falseLabel?: string;
+}
+
+function BooleanField({
+  label,
+  description,
+  value,
+  onChange,
+  trueLabel = 'Sim',
+  falseLabel = 'Nao',
+}: BooleanFieldProps) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold text-white">{label}</p>
+          {description ? <p className="text-xs text-slate-400">{description}</p> : null}
+        </div>
+        <select
+          value={value ? 'true' : 'false'}
+          onChange={(event) => onChange(event.target.value === 'true')}
+          className="h-11 min-w-[140px] rounded-2xl border border-white/10 bg-white/8 px-4 text-sm font-semibold text-white outline-none transition focus:border-amber-300/45"
+        >
+          <option value="true" className="bg-zinc-900 text-white">
+            {trueLabel}
+          </option>
+          <option value="false" className="bg-zinc-900 text-white">
+            {falseLabel}
+          </option>
+        </select>
+      </div>
+    </div>
+  );
+}
+
+interface ChipCheckboxProps {
+  label: string;
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (checked: boolean) => void;
+}
+
+function ChipCheckbox({ label, checked, disabled, onChange }: ChipCheckboxProps) {
+  return (
+    <label
+      className={`inline-flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-medium transition ${
+        checked
+          ? 'border-amber-300/35 bg-white/8 text-white'
+          : 'border-white/10 bg-black/20 text-slate-300'
+      } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.checked)}
+        className="h-4 w-4 accent-amber-300"
+      />
+      {label}
+    </label>
+  );
+}
+
 export function CompanyOnboarding({ initialTenant }: CompanyOnboardingProps) {
   const [tenant, setTenant] = useState<ConnectTenant | null>(initialTenant);
   const [error, setError] = useState<string | null>(null);
@@ -131,10 +200,10 @@ export function CompanyOnboarding({ initialTenant }: CompanyOnboardingProps) {
   return (
     <section className="relative mx-auto w-full max-w-4xl overflow-hidden rounded-[2rem] border border-white/12 bg-[radial-gradient(circle_at_top_left,_rgba(255,196,89,0.18),_transparent_24%),linear-gradient(160deg,rgba(16,18,27,0.94),rgba(8,10,16,0.98))] p-6 shadow-[0_30px_90px_rgba(0,0,0,0.35)] sm:p-8">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.03)_50%,transparent_100%)] opacity-60" />
-      <div className="relative">
+      <div className="relative z-10">
         <form
           onSubmit={handleSubmit}
-          className="grid gap-5 rounded-[1.8rem] border border-white/10 bg-black/20 p-5 backdrop-blur sm:p-6"
+          className="relative z-10 grid gap-5 rounded-[1.8rem] border border-white/10 bg-black/20 p-5 backdrop-blur sm:p-6"
         >
           <div className="space-y-3 text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.35em] text-amber-200/75">
@@ -305,79 +374,52 @@ export function CompanyOnboarding({ initialTenant }: CompanyOnboardingProps) {
                 </p>
               </div>
             </div>
-            <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-              <div>
-                <p className="text-sm font-semibold text-white">Aceita cartao</p>
-                <p className="text-xs text-slate-400">Marque as bandeiras aceitas.</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setForm((current) => ({ ...current, acceptsCard: !current.acceptsCard }))}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${form.acceptsCard ? 'bg-emerald-400 text-zinc-950' : 'bg-white/10 text-white'}`}
-              >
-                {form.acceptsCard ? 'Sim' : 'Nao'}
-              </button>
-            </div>
+            <BooleanField
+              label="Aceita cartao"
+              description="Marque as bandeiras aceitas."
+              value={form.acceptsCard}
+              onChange={(acceptsCard) => setForm((current) => ({ ...current, acceptsCard }))}
+            />
             <div className="flex flex-wrap gap-3">
               {CARD_BRANDS.map((brand) => {
                 const selected = form.cardBrands.includes(brand);
                 return (
-                  <button
+                  <ChipCheckbox
                     key={brand}
-                    type="button"
                     disabled={!form.acceptsCard}
-                    onClick={() => toggleArrayValue('cardBrands', brand)}
-                    className={`rounded-full px-4 py-2 text-sm font-medium transition ${selected ? 'bg-amber-300 text-zinc-950' : 'bg-black/20 text-slate-300'} disabled:cursor-not-allowed disabled:opacity-50`}
-                  >
-                    {brand}
-                  </button>
+                    checked={selected}
+                    label={brand}
+                    onChange={() => toggleArrayValue('cardBrands', brand)}
+                  />
                 );
               })}
             </div>
-            <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-              <div>
-                <p className="text-sm font-semibold text-white">Aceita vale alimentacao</p>
-                <p className="text-xs text-slate-400">Marque as bandeiras de vale.</p>
-              </div>
-              <button
-                type="button"
-                onClick={() =>
-                  setForm((current) => ({ ...current, acceptsVoucher: !current.acceptsVoucher }))
-                }
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${form.acceptsVoucher ? 'bg-emerald-400 text-zinc-950' : 'bg-white/10 text-white'}`}
-              >
-                {form.acceptsVoucher ? 'Sim' : 'Nao'}
-              </button>
-            </div>
+            <BooleanField
+              label="Aceita vale alimentacao"
+              description="Marque as bandeiras de vale."
+              value={form.acceptsVoucher}
+              onChange={(acceptsVoucher) => setForm((current) => ({ ...current, acceptsVoucher }))}
+            />
             <div className="flex flex-wrap gap-3">
               {VOUCHER_BRANDS.map((brand) => {
                 const selected = form.voucherBrands.includes(brand);
                 return (
-                  <button
+                  <ChipCheckbox
                     key={brand}
-                    type="button"
                     disabled={!form.acceptsVoucher}
-                    onClick={() => toggleArrayValue('voucherBrands', brand)}
-                    className={`rounded-full px-4 py-2 text-sm font-medium transition ${selected ? 'bg-amber-300 text-zinc-950' : 'bg-black/20 text-slate-300'} disabled:cursor-not-allowed disabled:opacity-50`}
-                  >
-                    {brand}
-                  </button>
+                    checked={selected}
+                    label={brand}
+                    onChange={() => toggleArrayValue('voucherBrands', brand)}
+                  />
                 );
               })}
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                <div>
-                  <p className="text-sm font-semibold text-white">Nota fiscal com CPF</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setForm((current) => ({ ...current, issuesNfCpf: !current.issuesNfCpf }))}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${form.issuesNfCpf ? 'bg-emerald-400 text-zinc-950' : 'bg-white/10 text-white'}`}
-                >
-                  {form.issuesNfCpf ? 'Sim' : 'Nao'}
-                </button>
-              </div>
+              <BooleanField
+                label="Nota fiscal com CPF"
+                value={form.issuesNfCpf}
+                onChange={(issuesNfCpf) => setForm((current) => ({ ...current, issuesNfCpf }))}
+              />
               <label className="grid gap-2">
                 <span className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
                   Chave PIX
@@ -400,13 +442,17 @@ export function CompanyOnboarding({ initialTenant }: CompanyOnboardingProps) {
                   Defina taxa, bairros e se entrega regioes mais distantes.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setForm((current) => ({ ...current, deliveryEnabled: !current.deliveryEnabled }))}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${form.deliveryEnabled ? 'bg-emerald-400 text-zinc-950' : 'bg-white/10 text-white'}`}
-              >
-                {form.deliveryEnabled ? 'Entrega ativada' : 'So retirada'}
-              </button>
+              <div className="min-w-[220px]">
+                <BooleanField
+                  label="Tipo de atendimento"
+                  value={form.deliveryEnabled}
+                  onChange={(deliveryEnabled) =>
+                    setForm((current) => ({ ...current, deliveryEnabled }))
+                  }
+                  trueLabel="Entrega"
+                  falseLabel="So retirada"
+                />
+              </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="grid gap-2">
@@ -445,22 +491,14 @@ export function CompanyOnboarding({ initialTenant }: CompanyOnboardingProps) {
                   className="h-12 rounded-2xl border border-white/10 bg-black/20 px-4 text-white outline-none transition focus:border-amber-300/45"
                 />
               </label>
-              <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 sm:col-span-2">
-                <div>
-                  <p className="text-sm font-semibold text-white">Entrega em bairros mais distantes</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setForm((current) => ({
-                      ...current,
-                      deliveryFarNeighborhoods: !current.deliveryFarNeighborhoods,
-                    }))
+              <div className="sm:col-span-2">
+                <BooleanField
+                  label="Entrega em bairros mais distantes"
+                  value={form.deliveryFarNeighborhoods}
+                  onChange={(deliveryFarNeighborhoods) =>
+                    setForm((current) => ({ ...current, deliveryFarNeighborhoods }))
                   }
-                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${form.deliveryFarNeighborhoods ? 'bg-emerald-400 text-zinc-950' : 'bg-white/10 text-white'}`}
-                >
-                  {form.deliveryFarNeighborhoods ? 'Sim' : 'Nao'}
-                </button>
+                />
               </div>
             </div>
           </div>
@@ -482,13 +520,23 @@ export function CompanyOnboarding({ initialTenant }: CompanyOnboardingProps) {
                   >
                     <div className="flex items-center justify-between gap-4">
                       <span className="font-medium text-white">{day.label}</span>
-                      <button
-                        type="button"
-                        onClick={() => updateHour(day.dayOfWeek, { enabled: !row.enabled })}
-                        className={`rounded-full px-4 py-2 text-xs font-semibold transition ${row.enabled ? 'bg-emerald-400 text-zinc-950' : 'bg-white/10 text-white'}`}
+                      <label
+                        className={`inline-flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-2 text-xs font-semibold transition ${
+                          row.enabled
+                            ? 'border-emerald-300/40 bg-emerald-400/15 text-emerald-100'
+                            : 'border-rose-400/30 bg-rose-500/10 text-rose-200'
+                        }`}
                       >
-                        {row.enabled ? 'Abre' : 'Fechado'}
-                      </button>
+                        <input
+                          type="checkbox"
+                          checked={row.enabled}
+                          onChange={(event) =>
+                            updateHour(day.dayOfWeek, { enabled: event.target.checked })
+                          }
+                          className={`h-4 w-4 ${row.enabled ? 'accent-emerald-300' : 'accent-rose-400'}`}
+                        />
+                        {row.enabled ? 'Aberto' : 'Fechado'}
+                      </label>
                     </div>
                     <input
                       type="time"
