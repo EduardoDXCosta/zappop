@@ -27,3 +27,31 @@ export interface EvolutionIncomingMessage {
 export type EvolutionParsedEvent =
   | EvolutionIncomingMessage
   | { event: 'ignored'; reason: string; raw: EvolutionRawEvent };
+
+export interface EvolutionInstanceSummary {
+  instanceName: string;
+  instanceId: string | null;
+  owner: string | null;
+  profileName: string | null;
+  profilePictureUrl: string | null;
+  profileStatus: string | null;
+  status: string | null;
+  serverUrl: string | null;
+}
+
+export interface EvolutionConnectionState {
+  instanceName: string;
+  state: string | null;
+}
+
+export interface EvolutionQrPayload {
+  pairingCode: string | null;
+  code: string | null;
+  count: number | null;
+}
+
+export interface EvolutionWebhookConfig {
+  enabled: boolean;
+  url: string | null;
+  events: string[];
+}

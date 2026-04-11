@@ -13,7 +13,8 @@ function isAuthorized(req: NextRequest): boolean {
         req.headers.get('x-webhook-token') ??
         '';
     const token = header.replace(/^Bearer\s+/i, '').trim();
-    return token === expected;
+    const queryToken = req.nextUrl.searchParams.get('token')?.trim() ?? '';
+    return token === expected || queryToken === expected;
 }
 
 export async function POST(req: NextRequest) {
