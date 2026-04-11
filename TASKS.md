@@ -6,7 +6,7 @@
 ---
 
 ## 📌 Status Geral do Projeto
-**Fase atual:** FASE 2 em andamento - runtime do agente de atendimento implementado, faltando validação em ambiente real via Evolution API
+**Fase atual:** FASE 5 em andamento - onboarding do restaurante e conexão da Evolution já existem, faltando validação real e continuação do cardápio/painel.
 
 ---
 
@@ -26,9 +26,10 @@
 
 ## 🔄 Em andamento
 
-- [ ] Testar recebimento real de mensagem via Evolution API (depende de URL/credenciais do usuário)
+- [ ] Testar recebimento real de mensagem via Evolution API
 - [ ] Validar atendimento completo ponta a ponta com mensagem real, tool calling e envio de resposta
 - [ ] Validar conexão real de instância via QR Code na Evolution com tenant existente
+- [ ] Refinar onboarding do restaurante com os campos ainda não modelados no schema atual
 
 ---
 
@@ -42,21 +43,21 @@
 - [x] Migration runner *(`db/migrate.mjs` + script `npm run db:migrate`, tabela `schema_migrations`)*
 - [x] `.env.local.example` com todas as variáveis necessárias
 - [x] Build de produção passa (`npm run build` OK)
-- [ ] Testar recebimento de mensagem WhatsApp *(bloqueado - aguardando Evolution API do usuário)*
+- [ ] Testar recebimento de mensagem WhatsApp *(aguardando validação com ambiente real da Evolution)*
 
 ### FASE 2 - Agente de atendimento
-- [x] Criar agente base plugável (suporte a Claude, GPT, Gemini) *(`src/lib/ai/*` + `src/lib/agent/*` com loop de tools e seleção por tenant)*
-- [x] Implementar memória do cliente (histórico de conversas) *(`conversations` + `getRecentMessages` + contexto no prompt)*
-- [x] Implementar fluxo de saudação e identificação do cliente *(`upsertCustomer` + prompt contextual com nome/histórico)*
-- [x] Implementar fluxo de exibição do cardápio (quando solicitado) *(`get_menu` tool usando categorias/produtos/cardápio do dia)*
-- [x] Implementar fluxo de pedido recorrente *(`lastOrder` + instrução de oferecer repetição + uso de endereço salvo)*
-- [x] Implementar fluxo de novo pedido *(`create_order` tool com validação de itens, endereço e criação de pedido)*
+- [x] Criar agente base plugável (suporte a Claude, GPT, Gemini) *(`src/lib/ai/*` + `src/lib/agent/*`)*
+- [x] Implementar memória do cliente (histórico de conversas) *(`conversations` + `getRecentMessages`)*
+- [x] Implementar fluxo de saudação e identificação do cliente *(`upsertCustomer` + prompt contextual)*
+- [x] Implementar fluxo de exibição do cardápio (quando solicitado) *(`get_menu`)*
+- [x] Implementar fluxo de pedido recorrente *(`lastOrder` + endereço salvo)*
+- [x] Implementar fluxo de novo pedido *(`create_order` com validação de itens, endereço e pagamento)*
 - [x] Implementar validação de horário de funcionamento *(`tenant_hours` + `tenant_exceptions` + `isOpenNow`)*
 - [x] Implementar aviso de restaurante fechado *(`handleIncomingMessage` responde e encerra quando fechado ou em férias)*
-- [x] Implementar fluxo de pagamento (PIX, cartão, dinheiro) *(`create_order` valida método e retorna chave PIX quando aplicável)*
-- [x] Implementar verificação de bandeira de cartão *(`tenant.cardBrands` validado no fechamento do pedido)*
-- [x] Implementar confirmação de pedido + tempo de espera *(`create_order` retorna resumo + waiting time para resposta final)*
-- [x] Implementar bloqueio de cliente inadimplente *(`customer.blocked` interrompe atendimento automaticamente)*
+- [x] Implementar fluxo de pagamento (PIX, cartão, dinheiro)
+- [x] Implementar verificação de bandeira de cartão
+- [x] Implementar confirmação de pedido + tempo de espera
+- [x] Implementar bloqueio de cliente inadimplente
 
 ### FASE 3 - Agente admin
 - [ ] Criar agente admin separado (número do dono)
@@ -67,7 +68,7 @@
 - [ ] Implementar cardápio do dia via WhatsApp
 
 ### FASE 4 - Painel Web
-- [ ] Criar estrutura do painel Next.js
+- [ ] Criar estrutura completa do painel Next.js
 - [ ] Implementar autenticação do dono
 - [ ] Implementar KDS (pedidos em tempo real)
 - [ ] Implementar mudança de status do pedido no painel
@@ -76,15 +77,19 @@
 - [ ] Implementar impressão normal
 - [ ] Implementar gestão de cardápio no painel
 - [ ] Implementar gestão de clientes e bloqueio
-- [ ] Implementar checklist de onboarding
+- [ ] Implementar checklist visual de onboarding
 
 ### FASE 5 - Onboarding
-- [ ] Criar página de cadastro do restaurante
+- [x] Criar página de cadastro do restaurante *(`src/app/page.tsx` + `company-onboarding.tsx`)*
 - [ ] Criar fluxo de escolha de plano
 - [ ] Integrar Asaas (pagamento recorrente)
-- [ ] Criar fluxo de conexão do WhatsApp (QR Code) *(base interna já implementada: tela `/`, rotas `/api/evolution/instances/*`, create/connect/disconnect e refresh de QR)*
+- [x] Criar fluxo de conexão do WhatsApp (QR Code) *(`src/app/_components/evolution-connect-panel.tsx` + rotas `/api/evolution/instances/*`)*
 - [ ] Criar botão de suporte com notificação WhatsApp
 - [ ] Implementar trial de 7 dias
+- [x] Persistir dados iniciais do restaurante *(`src/app/api/onboarding/tenant/route.ts`)*
+- [x] Persistir horário de funcionamento inicial *(`replaceTenantHours`)*
+- [ ] Modelar e salvar campos ainda fora do schema atual:
+  valor mínimo do pedido, e-mail, tempo de entrega dinâmico, frete por bairro/região, área rural e regras operacionais avançadas
 
 ### FASE 6 - Promoções e Fidelidade
 - [ ] Implementar promoções por horário
@@ -125,6 +130,7 @@
 | 11/04/2026 | Scaffold Next.js 16 concluído dentro de `d:/ProjetosAntigravity/ZapFood` |
 | 11/04/2026 | Driver Postgres escolhido: `postgres` (postgres.js) - sem ORM |
 | 11/04/2026 | Schema inicial com 18 tabelas aplicando supabase-postgres-best-practices |
-| 11/04/2026 | Banco hospedado no EasyPanel (host interno `dinastia_postgres_delivery`) - migrações locais bloqueadas até haver URL externa ou deploy |
+| 11/04/2026 | Banco hospedado no EasyPanel |
 | 11/04/2026 | FASE 2 do agente de atendimento integrada ao webhook com build de produção validado localmente |
 | 11/04/2026 | Tela interna de conexão Evolution implementada com create/connect/logout/status por slug, usando segredos apenas no backend |
+| 11/04/2026 | Onboarding inicial do restaurante implementado antes da conexão do WhatsApp |

@@ -1,277 +1,208 @@
-# 🍔 WhatsMenu — Agente de Atendimento WhatsApp para Restaurantes
+﻿# WhatsMenu - Agente de Atendimento WhatsApp para Restaurantes
 
-> **Documento master do projeto. Claude Code deve sempre consultar este arquivo antes de qualquer ação. Não fazer alterações de arquitetura sem aprovação explícita.**
-
----
-
-## 📌 Visão Geral
-
-App SaaS de atendimento automatizado via WhatsApp para restaurantes, marmitarias e hamburguerias. O cliente conversa naturalmente com um agente de IA que entende o contexto, tem memória dos pedidos anteriores, passa cardápio quando solicitado, recebe pedidos, informa promoções e envia atualizações de status.
+> Documento master do projeto. Deve ser consultado antes de qualquer alteração importante de arquitetura ou escopo.
 
 ---
 
-## 🧱 Stack Técnica
+## Visão Geral
+
+WhatsMenu é um SaaS de atendimento automatizado via WhatsApp para restaurantes, marmitarias e hamburguerias. O cliente conversa com um agente de IA que entende contexto, lembra pedidos anteriores, consulta cardápio quando solicitado, recebe pedidos e acompanha a operação do restaurante.
+
+---
+
+## Stack Técnica
 
 | Camada | Tecnologia |
 |---|---|
 | Frontend / Backend | Next.js |
-| Banco de dados | PostgreSQL (direto, sem Supabase) |
+| Banco de dados | PostgreSQL direto (sem Supabase) |
 | WhatsApp | Evolution API |
-| IA | Plugável — Claude, GPT, Gemini (configurável por cliente) |
-| Pagamentos (restaurante → plataforma) | Asaas |
+| IA | Plugável - Claude, GPT, Gemini |
+| Pagamentos da plataforma | Asaas |
 | Desenvolvimento | Claude Code |
 
 ---
 
-## 🏗️ Arquitetura
+## Arquitetura Atual
 
-```
-Evolution API
-     ↓ webhook
-Next.js (backend)
-     ↓
-PostgreSQL
-     ↓
-Agente IA (plugável)
-     ↓
-Resposta → Evolution API → WhatsApp
+```text
+Painel / Onboarding Next.js
+        ↓
+Rotas internas do backend
+        ↓
+PostgreSQL + Evolution API + provedores de IA
+        ↓
+Webhook Evolution → runtime do agente → WhatsApp do cliente
 ```
 
 ---
 
-## 👤 Tipos de Usuário
+## Tipos de Usuário
 
-### 1. Cliente Final
+### 1. Cliente final
 Conversa com o agente via WhatsApp do restaurante.
 
-### 2. Dono do Restaurante
-- Gerencia operação rápida pelo **WhatsApp Admin**
-- Gerencia cadastros completos pelo **Painel Web**
+### 2. Dono do restaurante
+- Faz onboarding da empresa
+- Conecta o WhatsApp via QR Code
+- Vai gerenciar operação pelo painel e pelo WhatsApp admin
 
-### 3. Administrador da Plataforma (você)
-- Recebe notificações de suporte no WhatsApp
+### 3. Administrador da plataforma
 - Gerencia tenants
+- Recebe suporte e acompanha onboarding
 
 ---
 
-## 💬 Comportamento do Agente de Atendimento
+## Estado Atual do Produto
+
+### Já implementado no código
+- Runtime do agente de atendimento com suporte a Claude, GPT e Gemini
+- Memória de conversa e último pedido do cliente
+- Validação de horário de funcionamento e exceções
+- Tool de cardápio (`get_menu`)
+- Tool de criação de pedido (`create_order`) com validação de itens, endereço, cartão, PIX e troco
+- Webhook da Evolution ligado ao runtime do agente
+- Tela de conexão da Evolution com gerar QR, renovar QR e desconectar
+- Onboarding inicial do restaurante antes da conexão do WhatsApp
+- Persistência inicial do tenant e horários de funcionamento
+
+### Ainda pendente
+- Teste ponta a ponta com mensagem real da Evolution
+- Painel operacional completo
+- Cardápio completo no onboarding
+- Regras avançadas de frete, estoque, promoções e pizza
+- Fluxo comercial com plano / cobrança / trial
+
+---
+
+## Comportamento do Agente de Atendimento
 
 ### Princípios fundamentais
-- Conversa **natural como humano** — nunca robótica
-- **Nunca envia cardápio sem o cliente pedir**
-- Tem **memória do cliente** — sabe nome, histórico de pedidos, endereço
-- Oferece pedido recorrente: *"Da última vez você pediu X, vai querer o mesmo?"*
-- Quando **fechado**: informa horário de funcionamento e encerra cordialmente
-- Quando cliente está **bloqueado**: informa que há uma pendência e pede contato com o restaurante
+- Conversa natural, curta e humana
+- Nunca envia cardápio sem o cliente pedir
+- Usa memória do cliente
+- Oferece repetir pedido anterior quando fizer sentido
+- Respeita horário de funcionamento
+- Informa bloqueio de cliente inadimplente
+- Não inventa preços ou produtos
 
-### Jornada do cliente
-1. Cliente manda "oi"
-2. Agente cumprimenta pelo nome (se já cadastrado)
-3. Pergunta o que deseja
-4. Se cliente já tem histórico → oferece repetir último pedido
-5. Conversa flui naturalmente até fechar o pedido
-6. Agente pergunta forma de pagamento (PIX, cartão, dinheiro)
-7. Se cartão → verifica bandeira aceita pelo restaurante
-8. Confirma pedido + informa tempo estimado de espera
-9. Pedido vai para o painel
-10. Conforme status muda no painel → cliente recebe atualização no WhatsApp
-11. Pedido entregue → agente manda mensagem de confirmação + solicita avaliação
+### Jornada principal
+1. Cliente envia mensagem
+2. Sistema identifica tenant pela instância Evolution
+3. Cliente é criado/atualizado no banco
+4. Histórico recente e último pedido entram no contexto
+5. O modelo responde ou chama tools
+6. O pedido é criado no sistema quando o fluxo está completo
+7. A resposta volta ao WhatsApp pela Evolution API
 
 ---
 
-## 🛠️ Agente Admin (WhatsApp do Dono)
+## Onboarding Atual
 
-Número separado do atendimento. Dono manda mensagens naturais:
-- *"Tirar o X-Salada hoje"*
-- *"Frango acabou"*
-- *"Preço do X-Burguer agora é 32 reais"*
-- *"Cardápio do dia: frango grelhado, arroz, feijão, salada"*
-
-O agente interpreta e atualiza o PostgreSQL automaticamente.
-
-**Regra:** WhatsApp Admin → alterações rápidas do dia a dia
-**Painel Web** → cadastros completos (produto novo com foto, promoções, configurações)
-
----
-
-## 📋 Cadastro do Restaurante
-
-```
-IDENTIFICAÇÃO
+### Etapa 1 - Cadastro da empresa
+Campos já suportados no app:
 - Nome completo
 - CPF
 - CNPJ
-- Logotipo (URL)
-
-PAGAMENTO
-- Aceita cartão? Se sim, quais bandeiras
-- Aceita vale alimentação? Se sim, quais
-- Faz nota fiscal com CPF?
-- Chave PIX
-
-ENDEREÇO (retirada)
-- Rua, número, bairro, CEP, cidade, estado
-- Latitude / Longitude (fixo, não tempo real)
-
-ENTREGA
-- Faz entrega? (boolean)
+- Logotipo por URL
+- WhatsApp de atendimento
+- WhatsApp do dono
+- Endereço de retirada
+- CEP
+- Cidade e estado
+- Entrega ativa ou só retirada
 - Valor do frete
-- Entrega em bairros distantes? (boolean)
-- Raio de entrega em km
-- Bairros atendidos (array)
+- Entrega em bairros distantes
+- Lista simples de bairros atendidos
+- Tempo de preparo
+- Chave PIX
+- Aceita cartão + bandeiras
+- Aceita vale alimentação + bandeiras
+- Nota fiscal com CPF
+- Horário de funcionamento por dia da semana
 
-FUNCIONAMENTO
-- Horário de abertura / fechamento
-- Pode ter dois turnos (ex: 11h-14h e 18h-22h)
-- Dias da semana que abre
-- Dias excepcionais (feriados, férias)
+### Etapa 2 - Conexão do WhatsApp
+- Garantir ou criar instância na Evolution
+- Configurar webhook automaticamente
+- Gerar QR Code
+- Gerar novo QR Code se expirar
+- Desconectar sessão atual
+- Exibir estado da conexão
 
-WHATSAPP
-- Número de atendimento (clientes)
-- Número admin (dono)
-```
-
----
-
-## 🗂️ Cardápio
-
-### Tipos
-- **Fixo** — hamburguerias, pizzarias. Muda raramente
-- **Do dia** — marmitarias. Dono atualiza toda manhã. Some automaticamente no dia seguinte
-
-### Estrutura
-- Categorias (ex: Lanches, Bebidas, Combos) com ordenação
-- Produtos com nome, descrição, preço, foto, disponibilidade
-- Adicionais / complementos por produto (obrigatório ou opcional, limite máximo)
-
-### Cardápio compartilhável
-Cada restaurante tem um **link público do cardápio digital** para compartilhar nas redes sociais.
+### Campos ainda não modelados no schema atual
+- Valor mínimo do pedido
+- Melhor e-mail
+- Tempo de entrega dinâmico
+- Frete por região ou bairro com regras avançadas
+- Área rural
+- Clonagem de cardápio
+- Controle de estoque por item
+- Taxa de embalagem
+- Regras de pizza e sabores
+- Promoções avançadas por janela de tempo
 
 ---
 
-## 📦 Pedidos
+## Cardápio
+
+### Tipos previstos
+- Cardápio fixo
+- Cardápio do dia
+
+### Estrutura prevista
+- Categorias
+- Produtos
+- Descrição e preço
+- Disponibilidade
+- Adicionais
+- Regras específicas por produto
+
+### Estado atual
+- Banco e queries básicas já existem
+- Consulta ao cardápio pelo agente já existe
+- Gestão visual completa do cardápio ainda não foi implementada
+
+---
+
+## Pedidos
 
 ### Status
-`aguardando → aceito → em preparo → saiu para entrega → entregue → cancelado`
+`aguardando -> aceito -> em_preparo -> saiu_entrega -> entregue -> cancelado`
 
 ### Tipos
-- Entrega
-- Retirada no local
+- Delivery
+- Pickup
 
-### Pagamento
-- PIX → confirmação automática antes de fechar pedido
-- Cartão → verifica bandeira aceita → pagamento na entrega
-- Dinheiro → pergunta se precisa de troco, para qual valor
-
-### Bloqueio de inadimplente
-- Manual pelo dono no painel
-- Cliente bloqueado tenta pedir → agente avisa sobre pendência
+### Estado atual
+- Pedido pode ser criado pelo agente
+- Itens são validados contra o banco
+- Endereço pode ser salvo e reutilizado
+- Pagamento é validado antes da criação
+- Painel de operação ainda não existe
 
 ---
 
-## 🖥️ Painel Web
+## Painel Web
 
-### Painel da Cozinha / Caixa (KDS)
-- Pedidos chegam em **tempo real**
-- Dono clica: Aceitar → Em Preparo → Saiu → Entregue
-- Cada mudança de status dispara mensagem automática pro cliente no WhatsApp
-- **Impressão**: aceita impressora térmica e impressora normal
+### Já existe
+- Home de onboarding
+- Fluxo de cadastro da empresa
+- Fluxo de conexão Evolution
 
-### Painel Admin
-- Gestão de cardápio (adicionar, editar, ativar/desativar)
-- Gestão de clientes (histórico, bloqueio)
-- Promoções e cupons
-- Relatórios de vendas
-- Configurações do restaurante
-- Modo férias / pausa
-
----
-
-## 🎯 Promoções e Fidelidade
-
-- Promoção por horário (ex: "Todo dia das 14h às 17h, X-Burguer por R$20")
-- Promoção por dia (ex: "Segunda sem frete")
-- Combos (ex: "Lanche + bebida por R$25")
-- Fidelidade (ex: "A cada 10 pedidos, ganha 1 grátis")
-- Cupons de desconto
-- **Disparo ativo** — mensagem automática para clientes inativos há X dias
+### Ainda vai existir
+- KDS / cozinha
+- Gestão de cardápio
+- Gestão de clientes
+- Configuração operacional
+- Checklist visual de onboarding
+- Relatórios
 
 ---
 
-## ⚙️ Funcionalidades Operacionais
+## Regras de implementação
 
-- **Tempo de espera** — dono configura no painel, agente informa ao cliente ao confirmar pedido
-- **Modo férias / pausa** — dono ativa no painel, agente avisa clientes automaticamente
-- **Aviso de fechado** — agente informa horário de funcionamento e encerra
-- **Confirmação de entrega** — agente manda mensagem + solicita avaliação
-- **Pesquisa de satisfação automática** — após entrega (plano Premium)
-- **Pixel do Facebook** — integração para rastreamento de anúncios (plano Premium)
-
----
-
-## 💰 Planos e Preços
-
-### Start — R$219,99/mês
-- Atendimento automático no WhatsApp
-- Atendimento no Facebook
-- Cardápio digital
-- Painel de pedidos
-
-### Advanced — R$254,99/mês
-Tudo do Start +
-- Programa de fidelidade automático
-- Cupons de desconto
-
-### Premium — R$329,99/mês
-Tudo do Advanced +
-- Atendimento no Instagram
-- Pesquisa de satisfação automática
-- Tela de pedidos para cozinha (KDS)
-- Pixel do Facebook
-
-### Trial
-- **7 dias grátis** com acesso completo ao Premium
-- No 7º dia → relatório automático enviado ao dono no WhatsApp (pedidos, faturamento, produto mais vendido, horário de pico)
-- Após trial sem assinatura → acesso bloqueado mas **dados preservados**
-- **Pagamento**: PIX, boleto ou cartão (via Asaas)
-
----
-
-## 🚀 Onboarding (Self-service)
-
-1. Dono acessa o site, escolhe plano, paga
-2. Recebe acesso ao painel
-3. Preenche dados do restaurante
-4. Conecta número WhatsApp via Evolution API (QR Code)
-5. Cadastra cardápio
-6. Ativa e começa a receber clientes
-
-### Checklist visual no painel
-- ✅ Dados do restaurante preenchidos
-- ✅ WhatsApp conectado
-- ✅ Cardápio cadastrado
-- ⬜ Horário configurado
-- ⬜ Forma de pagamento configurada
-
-### Botão de suporte
-Se não conseguir conectar o WhatsApp → botão dispara mensagem no WhatsApp do admin da plataforma com dados do cliente → tela exibe "Em breve entraremos em contato"
-
----
-
-## 📊 Relatórios
-
-- Relatório automático mensal enviado ao dono no WhatsApp
-- Relatório do trial no 7º dia
-- Dados: total de pedidos, faturamento, produto mais vendido, horário de pico, clientes novos vs recorrentes
-
----
-
-## 🔒 Regras para o Claude Code
-
-1. **Sempre consultar este arquivo antes de qualquer ação**
-2. **Sempre consultar TASKS.md para ver o que foi feito e o que fazer a seguir**
-3. **Não fazer alterações de arquitetura sem aprovação explícita**
-4. **Não adicionar funcionalidades não listadas aqui sem aprovação**
-5. **Não trocar tecnologias da stack sem aprovação**
-6. **Sempre atualizar TASKS.md após completar uma tarefa**
-7. **Sempre salvar arquivos importantes no Obsidian**
+1. Consultar este arquivo antes de mudanças estruturais.
+2. Consultar `TASKS.md` antes de começar uma nova etapa.
+3. Não alterar arquitetura sem aprovação explícita.
+4. Não adicionar funcionalidades fora do escopo sem aprovação.
+5. Atualizar `TASKS.md` após concluir etapas relevantes.
