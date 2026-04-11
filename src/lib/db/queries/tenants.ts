@@ -117,6 +117,21 @@ export async function getTenantBySlug(slug: string): Promise<Tenant | null> {
     return rows[0] ? mapTenant(rows[0]) : null;
 }
 
+export async function getDefaultTenantForApp(): Promise<Tenant | null> {
+    const preferredSlug = process.env.APP_DEFAULT_TENANT_SLUG?.trim();
+    if (preferredSlug) {
+        return getTenantBySlug(preferredSlug);
+    }
+
+    const rows = await sql<TenantRow[]>`
+        select ${tenantSelect}
+        from tenants
+        order by created_at asc
+        limit 1
+    `;
+    return rows[0] ? mapTenant(rows[0]) : null;
+}
+
 export async function getTenantByWhatsAppNumber(
     number: string
 ): Promise<{ tenant: Tenant; role: 'customer' | 'admin' } | null> {

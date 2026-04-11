@@ -1,6 +1,6 @@
-'use client';
+﻿'use client';
 
-import { FormEvent, useEffect, useEffectEvent, useState, useTransition } from 'react';
+import { useEffect, useEffectEvent, useState, useTransition } from 'react';
 
 type InstancePayload = {
   exists: boolean;
@@ -25,8 +25,6 @@ type StatusResponse = {
   tenant: { slug: string; name: string };
   instance: InstancePayload;
 };
-
-const DEFAULT_SLUG = '';
 
 function statusLabel(state: string | null): string {
   switch (state) {
@@ -53,15 +51,13 @@ function statusTone(state: string | null): string {
 }
 
 export function EvolutionConnectPanel() {
-  const [slugInput, setSlugInput] = useState(DEFAULT_SLUG);
-  const [activeSlug, setActiveSlug] = useState('');
   const [data, setData] = useState<StatusResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const loadStatus = useEffectEvent(async (slug: string) => {
-    const res = await fetch(`/api/evolution/instances/${encodeURIComponent(slug)}`, {
+  const loadStatus = useEffectEvent(async () => {
+    const res = await fetch('/api/evolution/instance', {
       cache: 'no-store',
     });
     const payload = (await res.json()) as StatusResponse | { error: string };
@@ -72,58 +68,48 @@ export function EvolutionConnectPanel() {
   });
 
   useEffect(() => {
-    if (!activeSlug) return;
+    loadStatus().catch((err) => {
+      setError(err instanceof Error ? err.message : String(err));
+    });
+  }, [loadStatus]);
+
+  useEffect(() => {
+    if (!data?.tenant.slug) return;
     const timer = window.setInterval(() => {
-      loadStatus(activeSlug).catch(() => {
+      loadStatus().catch(() => {
         // silent during polling
       });
     }, 8000);
     return () => window.clearInterval(timer);
-  }, [activeSlug, loadStatus]);
+  }, [data?.tenant.slug, loadStatus]);
 
   async function runAction(
-    slug: string,
-    path: string,
-    method: 'GET' | 'POST',
-    successMessage: string
+    method: 'POST' | 'PATCH',
+    successMessage: string,
+    body?: Record<string, string>
   ) {
     setError(null);
     setSuccess(null);
 
     startTransition(async () => {
       try {
-        const res = await fetch(path, {
+        const res = await fetch('/api/evolution/instance', {
           method,
           cache: 'no-store',
+          headers: body ? { 'Content-Type': 'application/json' } : undefined,
+          body: body ? JSON.stringify(body) : undefined,
         });
         const payload = (await res.json()) as StatusResponse | { error: string };
         if (!res.ok) {
           throw new Error('error' in payload ? payload.error : 'Falha ao executar ação');
         }
 
-        setActiveSlug(slug);
         setData(payload as StatusResponse);
         setSuccess(successMessage);
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
       }
     });
-  }
-
-  function handleLookup(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const slug = slugInput.trim();
-    if (!slug) {
-      setError('Informe o slug do restaurante para consultar a instância.');
-      return;
-    }
-
-    runAction(
-      slug,
-      `/api/evolution/instances/${encodeURIComponent(slug)}`,
-      'GET',
-      'Status da instância atualizado.'
-    );
   }
 
   const currentState = data?.instance.connectionState ?? null;
@@ -138,46 +124,22 @@ export function EvolutionConnectPanel() {
               Conexão WhatsApp
             </p>
             <h1 className="font-[family:var(--font-display)] text-4xl leading-none text-white sm:text-5xl">
-              Ligue o restaurante na Evolution sem expor nenhuma chave.
+              Conecte o WhatsApp do restaurante em poucos cliques.
             </h1>
             <p className="max-w-xl text-sm leading-7 text-slate-300 sm:text-base">
-              O painel cria a instância no backend, configura webhook, gera QR Code,
-              permite renovar o QR e mostra o estado da sessão do WhatsApp.
+              O sistema já identifica o restaurante configurado, prepara a instância no backend,
+              gera o QR Code e acompanha o estado da sessão automaticamente.
             </p>
           </div>
           <div className="grid gap-3 rounded-[1.5rem] border border-white/10 bg-white/6 px-5 py-4 text-sm text-slate-200 backdrop-blur">
             <span className="text-xs uppercase tracking-[0.28em] text-white/50">
-              Fluxo seguro
+              Como funciona
             </span>
-            <span>1. Buscar tenant pelo slug</span>
-            <span>2. Criar/garantir instância</span>
-            <span>3. Exibir QR e monitorar conexão</span>
+            <span>1. O painel carrega seu restaurante</span>
+            <span>2. Você gera o QR Code</span>
+            <span>3. Escaneia no WhatsApp e conecta</span>
           </div>
         </div>
-
-        <form
-          onSubmit={handleLookup}
-          className="grid gap-4 rounded-[1.6rem] border border-white/10 bg-black/20 p-4 backdrop-blur sm:grid-cols-[1fr_auto]"
-        >
-          <label className="grid gap-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">
-              Slug do restaurante
-            </span>
-            <input
-              value={slugInput}
-              onChange={(event) => setSlugInput(event.target.value)}
-              placeholder="ex: zapfood-centro"
-              className="h-12 rounded-2xl border border-white/10 bg-white/8 px-4 text-white outline-none transition focus:border-amber-300/45 focus:bg-white/12"
-            />
-          </label>
-          <button
-            type="submit"
-            disabled={isPending}
-            className="h-12 rounded-2xl bg-amber-300 px-6 font-semibold text-zinc-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isPending ? 'Consultando...' : 'Consultar'}
-          </button>
-        </form>
 
         {error ? (
           <div className="rounded-2xl border border-rose-400/25 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
@@ -200,10 +162,12 @@ export function EvolutionConnectPanel() {
                     Restaurante
                   </p>
                   <h2 className="mt-2 text-2xl font-semibold text-white">
-                    {data?.tenant.name ?? 'Aguardando consulta'}
+                    {data?.tenant.name ?? 'Carregando restaurante...'}
                   </h2>
                   <p className="mt-1 text-sm text-slate-400">
-                    {data?.tenant.slug ? `Slug: ${data.tenant.slug}` : 'Digite o slug para começar'}
+                    {data?.tenant.slug
+                      ? `Instância usada pelo sistema: ${data.tenant.slug}`
+                      : 'Assim que o restaurante for identificado, a conexão fica pronta para gerar o QR.'}
                   </p>
                 </div>
                 <span
@@ -218,29 +182,19 @@ export function EvolutionConnectPanel() {
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
                 <button
                   type="button"
-                  disabled={isPending || !slugInput.trim()}
-                  onClick={() =>
-                    runAction(
-                      slugInput.trim(),
-                      `/api/evolution/instances/${encodeURIComponent(slugInput.trim())}`,
-                      'POST',
-                      'Instância garantida e QR Code gerado.'
-                    )
-                  }
+                  disabled={isPending || !data?.tenant.slug}
+                  onClick={() => runAction('POST', 'Instância garantida e QR Code gerado.')}
                   className="rounded-2xl border border-amber-300/40 bg-amber-300 px-4 py-3 font-semibold text-zinc-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Criar instância + gerar QR
+                  Gerar QR Code
                 </button>
                 <button
                   type="button"
-                  disabled={isPending || !activeSlug}
+                  disabled={isPending || !data?.tenant.slug}
                   onClick={() =>
-                    runAction(
-                      activeSlug,
-                      `/api/evolution/instances/${encodeURIComponent(activeSlug)}/connect`,
-                      'POST',
-                      'Novo QR Code solicitado.'
-                    )
+                    runAction('PATCH', 'Novo QR Code solicitado.', {
+                      action: 'refresh_qr',
+                    })
                   }
                   className="rounded-2xl border border-white/12 bg-white/8 px-4 py-3 font-semibold text-white transition hover:bg-white/12 disabled:cursor-not-allowed disabled:opacity-60"
                 >
@@ -248,21 +202,18 @@ export function EvolutionConnectPanel() {
                 </button>
                 <button
                   type="button"
-                  disabled={isPending || !activeSlug}
+                  disabled={isPending || !data?.tenant.slug}
                   onClick={() =>
-                    runAction(
-                      activeSlug,
-                      `/api/evolution/instances/${encodeURIComponent(activeSlug)}/disconnect`,
-                      'POST',
-                      'Sessão desconectada.'
-                    )
+                    runAction('PATCH', 'Sessão desconectada.', {
+                      action: 'disconnect',
+                    })
                   }
                   className="rounded-2xl border border-rose-400/25 bg-rose-500/10 px-4 py-3 font-semibold text-rose-100 transition hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Desconectar WhatsApp
                 </button>
                 <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-slate-300">
-                  O QR pode expirar. Se isso acontecer, use “Gerar novo QR Code”.
+                  Se o QR expirar ou falhar, toque em "Gerar novo QR Code".
                 </div>
               </div>
             </article>
@@ -332,8 +283,7 @@ export function EvolutionConnectPanel() {
                     {data.instance.qr.pairingCode ?? 'QR pronto para leitura'}
                   </p>
                   <p className="mt-2 max-w-sm text-sm leading-6 text-zinc-600">
-                    Abra o WhatsApp no celular do restaurante, toque em dispositivos
-                    conectados e escaneie este QR Code.
+                    Abra o WhatsApp no celular do restaurante, toque em dispositivos conectados e escaneie este QR Code.
                   </p>
                   <p className="mt-3 text-xs uppercase tracking-[0.2em] text-zinc-500">
                     Tentativa {data.instance.qr.attempts ?? 1}
@@ -345,18 +295,16 @@ export function EvolutionConnectPanel() {
                     WhatsApp conectado
                   </p>
                   <p className="text-sm leading-6 text-zinc-600">
-                    A sessão já está aberta. Se quiser trocar o aparelho, desconecte e
-                    gere um novo QR.
+                    A sessão já está aberta. Se quiser trocar o aparelho, desconecte e gere um novo QR.
                   </p>
                 </div>
               ) : (
                 <div className="max-w-sm space-y-3">
                   <p className="font-[family:var(--font-display)] text-4xl text-zinc-900">
-                    Pronto para gerar
+                    Pronto para conectar
                   </p>
                   <p className="text-sm leading-6 text-zinc-600">
-                    Consulte o restaurante e clique em “Criar instância + gerar QR” para
-                    iniciar o pareamento.
+                    Basta tocar em "Gerar QR Code" para iniciar o pareamento do WhatsApp do restaurante.
                   </p>
                 </div>
               )}
