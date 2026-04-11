@@ -1,4 +1,4 @@
-﻿# ✅ TASKS - WhatsMenu
+# ✅ TASKS - WhatsMenu
 
 > **Este arquivo deve ser atualizado sempre que uma tarefa for concluída ou iniciada.**
 > **Claude Code deve consultar este arquivo antes de qualquer sessão de desenvolvimento.**
@@ -134,3 +134,4 @@
 | 11/04/2026 | FASE 2 do agente de atendimento integrada ao webhook com build de produção validado localmente |
 | 11/04/2026 | Tela interna de conexão Evolution implementada com create/connect/logout/status por slug, usando segredos apenas no backend |
 | 11/04/2026 | Onboarding inicial do restaurante implementado antes da conexão do WhatsApp |
+| 11/04/2026 | Fix onboarding: chips de bandeira com estilo uniforme + toggle Aberto/Fechado no horário com visual rose para fechado |
