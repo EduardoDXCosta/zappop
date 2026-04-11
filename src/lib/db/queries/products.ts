@@ -92,6 +92,20 @@ export async function getProductById(id: string): Promise<Product | null> {
     return rows[0] ? mapProduct(rows[0]) : null;
 }
 
+export async function getProductsByIds(
+    tenantId: string,
+    ids: string[]
+): Promise<Product[]> {
+    if (ids.length === 0) return [];
+    const rows = await sql<ProductRow[]>`
+        select ${productSelect}
+        from products
+        where tenant_id = ${tenantId}
+          and id in ${sql(ids)}
+    `;
+    return rows.map(mapProduct);
+}
+
 export async function getProductAddons(
     productId: string
 ): Promise<ProductAddon[]> {

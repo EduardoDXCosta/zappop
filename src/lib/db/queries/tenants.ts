@@ -5,6 +5,12 @@ type TenantRow = {
     id: string;
     slug: string;
     name: string;
+    acceptsCard: boolean;
+    cardBrands: string[];
+    acceptsVoucher: boolean;
+    voucherBrands: string[];
+    issuesNfCpf: boolean;
+    pixKey: string | null;
     aiProvider: Tenant['aiProvider'];
     aiApiKeyEncrypted: string | null;
     plan: Tenant['plan'];
@@ -34,6 +40,12 @@ function mapTenant(row: TenantRow): Tenant {
         id: row.id,
         slug: row.slug,
         name: row.name,
+        acceptsCard: row.acceptsCard,
+        cardBrands: row.cardBrands,
+        acceptsVoucher: row.acceptsVoucher,
+        voucherBrands: row.voucherBrands,
+        issuesNfCpf: row.issuesNfCpf,
+        pixKey: row.pixKey,
         aiProvider: row.aiProvider,
         aiApiKeyEncrypted: row.aiApiKeyEncrypted,
         plan: row.plan,
@@ -62,6 +74,12 @@ const tenantSelect = sql`
     id,
     slug,
     name,
+    accepts_card         as "acceptsCard",
+    card_brands          as "cardBrands",
+    accepts_voucher      as "acceptsVoucher",
+    voucher_brands       as "voucherBrands",
+    issues_nf_cpf        as "issuesNfCpf",
+    pix_key              as "pixKey",
     ai_provider          as "aiProvider",
     ai_api_key_encrypted as "aiApiKeyEncrypted",
     plan,

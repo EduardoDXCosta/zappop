@@ -118,6 +118,7 @@ export async function createOrder(input: {
         productName: string;
         quantity: number;
         unitPrice: number;
+        notes?: string;
     }>;
     deliveryFee?: number;
     discount?: number;
@@ -167,7 +168,7 @@ export async function createOrder(input: {
             await tx`
                 insert into order_items (
                     order_id, product_id, product_name,
-                    quantity, unit_price, subtotal
+                    quantity, unit_price, subtotal, notes
                 )
                 values (
                     ${order.id},
@@ -175,7 +176,8 @@ export async function createOrder(input: {
                     ${item.productName},
                     ${item.quantity},
                     ${item.unitPrice},
-                    ${lineSubtotal}
+                    ${lineSubtotal},
+                    ${item.notes ?? null}
                 )
             `;
         }

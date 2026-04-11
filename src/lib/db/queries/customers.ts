@@ -116,6 +116,19 @@ export async function getCustomerAddresses(
     return rows;
 }
 
+export async function getDefaultCustomerAddress(
+    customerId: string
+): Promise<CustomerAddress | null> {
+    const rows = await sql<CustomerAddressRow[]>`
+        select ${addressSelect}
+        from customer_addresses
+        where customer_id = ${customerId}
+        order by is_default desc, created_at asc
+        limit 1
+    `;
+    return rows[0] ?? null;
+}
+
 export async function addCustomerAddress(
     input: Omit<CustomerAddress, 'id'>
 ): Promise<CustomerAddress> {
@@ -143,6 +156,50 @@ export async function addCustomerAddress(
             is_default      as "isDefault"
     `;
     return rows[0];
+}
+
+export async function saveDefaultCustomerAddress(input: {
+    customerId: string;
+    label?: string | null;
+    street: string;
+    number?: string | null;
+    complement?: string | null;
+    neighborhood?: string | null;
+    zip?: string | null;
+    city?: string | null;
+    state?: string | null;
+    referencePoint?: string | null;
+}): Promise<CustomerAddress> {
+    return sql.begin(async (tx) => {
+        await tx`
+            update customer_addresses
+            set is_default = false
+            where customer_id = ${input.customerId}
+        `;
+
+        const rows = await tx<CustomerAddressRow[]>`
+            insert into customer_addresses (
+                customer_id, label, street, number, complement,
+                neighborhood, zip, city, state, reference_point, is_default
+            )
+            values (
+                ${input.customerId},
+                ${input.label ?? null},
+                ${input.street},
+                ${input.number ?? null},
+                ${input.complement ?? null},
+                ${input.neighborhood ?? null},
+                ${input.zip ?? null},
+                ${input.city ?? null},
+                ${input.state ?? null},
+                ${input.referencePoint ?? null},
+                true
+            )
+            returning ${addressSelect}
+        `;
+
+        return rows[0];
+    });
 }
 
 export async function blockCustomer(

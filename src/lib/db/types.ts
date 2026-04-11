@@ -11,6 +11,12 @@ export interface Tenant {
     id: string;
     slug: string;
     name: string;
+    acceptsCard: boolean;
+    cardBrands: string[];
+    acceptsVoucher: boolean;
+    voucherBrands: string[];
+    issuesNfCpf: boolean;
+    pixKey: string | null;
     aiProvider: AiProvider;
     aiApiKeyEncrypted: string | null;
     plan: TenantPlan;

@@ -1,4 +1,4 @@
-import type { EvolutionIncomingMessage } from '@/lib/evolution';
+﻿import type { EvolutionIncomingMessage } from '@/lib/evolution';
 import { getEvolutionClient } from '@/lib/evolution';
 import type { AIMessage, AIProvider } from '@/lib/ai';
 import { getAIProvider } from '@/lib/ai';
@@ -10,9 +10,10 @@ import {
     appendMessage,
     getRecentMessages,
     getLastOrderByCustomer,
+    getDefaultCustomerAddress,
 } from '@/lib/db/queries';
 import { isOpenNow, formatHoursHuman } from '@/lib/hours';
-import type { Tenant, Customer } from '@/lib/db/types';
+import type { Tenant, Customer, CustomerAddress } from '@/lib/db/types';
 import { buildSystemPrompt } from './prompt';
 import { agentTools, executeToolCall } from './tools';
 
@@ -54,6 +55,7 @@ export async function handleIncomingMessage(
     });
 
     const hours = await getTenantHours(tenant.id);
+    const hoursHuman = formatHoursHuman(hours);
     const today = new Date().toISOString().slice(0, 10);
     const in14Days = new Date(Date.now() + 14 * 86_400_000)
         .toISOString()
@@ -62,16 +64,18 @@ export async function handleIncomingMessage(
     const openState = isOpenNow(hours, exceptions);
 
     if (tenant.vacationMode || !openState.open) {
-        const hoursHuman = formatHoursHuman(hours);
         const reply = tenant.vacationMode
-            ? `No momento estamos em pausa/férias. Voltamos em breve 🙏`
+            ? 'No momento estamos em pausa/férias. Voltamos em breve 🙏'
             : `No momento estamos fechados. Nosso horário de funcionamento:\n\n${hoursHuman}\n\nRetornaremos seu contato na próxima abertura 😊`;
         await sendAndLog(tenant, customer, msg, reply);
         return;
     }
 
-    const lastOrder = await getLastOrderByCustomer(customer.id);
-    const history = await getRecentMessages(customer.id, MAX_HISTORY);
+    const [lastOrder, defaultAddress, history] = await Promise.all([
+        getLastOrderByCustomer(customer.id),
+        getDefaultCustomerAddress(customer.id),
+        getRecentMessages(customer.id, MAX_HISTORY),
+    ]);
 
     const nowLocal = new Intl.DateTimeFormat('pt-BR', {
         timeZone: 'America/Sao_Paulo',
@@ -82,24 +86,35 @@ export async function handleIncomingMessage(
     const systemPrompt = buildSystemPrompt({
         tenant,
         customer,
-        hoursHuman: formatHoursHuman(hours),
+        defaultAddress,
+        hoursHuman,
         openState,
         lastOrder,
         nowLocal,
     });
 
     const provider = getAIProvider(tenant.aiProvider);
-    const aiMessages: AIMessage[] = history.map((m) => ({
-        role: m.role === 'assistant' ? 'assistant' : 'user',
-        content: m.content,
-    }));
+    const aiMessages: AIMessage[] = history
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .map((m) => ({
+            role: m.role as 'user' | 'assistant',
+            content: m.content,
+        }));
+
+    try {
+        const evo = getEvolutionClient();
+        await evo.sendTyping(msg.instance, msg.phoneE164, 1200);
+    } catch {
+        // ignore typing indicator failures
+    }
 
     const reply = await runAgentLoop(
         provider,
         systemPrompt,
         aiMessages,
         tenant,
-        customer
+        customer,
+        defaultAddress
     );
 
     if (reply.trim().length > 0) {
@@ -112,7 +127,8 @@ async function runAgentLoop(
     system: string,
     messages: AIMessage[],
     tenant: Tenant,
-    customer: Customer
+    customer: Customer,
+    defaultAddress: CustomerAddress | null
 ): Promise<string> {
     let workingMessages = [...messages];
     let finalText = '';
@@ -134,17 +150,24 @@ async function runAgentLoop(
 
         const toolResults = await Promise.all(
             response.toolCalls.map((call) =>
-                executeToolCall(call, { tenant, customer })
+                executeToolCall(call, { tenant, customer, defaultAddress })
             )
         );
 
-        // Why: providers differ in how they want tool results threaded back.
-        // We flatten to a synthetic user turn containing a structured tool-result
-        // block so all three providers (Claude/GPT/Gemini) can interpret it
-        // uniformly without custom per-provider handling in FASE 2.
         const toolSummary = toolResults
             .map((r) => `[tool:${r.name}] ${r.content}`)
             .join('\n');
+
+        await appendMessage({
+            tenantId: tenant.id,
+            customerId: customer.id,
+            role: 'tool',
+            content: toolSummary,
+            metadata: {
+                toolCalls: response.toolCalls,
+            },
+        });
+
         workingMessages = [
             ...workingMessages,
             { role: 'assistant', content: response.text || '(calling tools)' },
@@ -166,7 +189,10 @@ async function sendAndLog(
 ): Promise<void> {
     try {
         const evo = getEvolutionClient();
-        await evo.sendText(msg.instance, msg.phoneE164, text);
+        const sent = await evo.sendText(msg.instance, msg.phoneE164, text);
+        if (!sent.ok) {
+            console.error('[agent] failed to send via evolution', sent.error);
+        }
     } catch (err) {
         console.error('[agent] failed to send via evolution', err);
     }
