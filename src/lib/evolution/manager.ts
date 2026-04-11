@@ -122,18 +122,20 @@ export async function fetchInstanceByName(
     const payload = await evolutionAdminFetch<unknown>(
       `/instance/fetchInstances?instanceName=${encodeURIComponent(instanceName)}`
     );
-    const root = asRecord(payload);
-    const response = root?.response;
+    
+    const elementsToCheck = Array.isArray(payload) 
+      ? payload 
+      : Array.isArray(asRecord(payload)?.response) 
+        ? asRecord(payload)?.response as unknown[]
+        : [payload];
 
-    if (Array.isArray(response)) {
-      for (const item of response) {
-        const mapped = mapInstance(item);
-        if (mapped?.instanceName === instanceName) return mapped;
-      }
-      return null;
+    for (const item of elementsToCheck) {
+      if (!item) continue;
+      const mapped = mapInstance(item);
+      if (mapped?.instanceName === instanceName) return mapped;
     }
 
-    return mapInstance(response);
+    return null;
   } catch (error: unknown) {
     if (error instanceof Error && error.message.includes('(404)')) {
       return null;
@@ -146,30 +148,65 @@ export async function createInstance(input: {
   instanceName: string;
   webhookUrl: string;
 }): Promise<EvolutionInstanceSummary | null> {
-  await evolutionAdminFetch<unknown>('/instance/create', {
-    method: 'POST',
-    body: JSON.stringify({
-      instanceName: input.instanceName,
-      qrcode: true,
-      integration: 'WHATSAPP-BAILEYS',
-      reject_call: true,
-      msg_call: 'No momento não atendemos chamadas por voz.',
-      groups_ignore: true,
-      always_online: true,
-      read_messages: true,
-      read_status: true,
-      syncFullHistory: false,
-      webhook: {
-        url: input.webhookUrl,
-        enabled: true,
-        webhookByEvents: false,
-        base64: false,
-        events: DEFAULT_WEBHOOK_EVENTS,
-      },
-    }),
-  });
+  try {
+    await evolutionAdminFetch<unknown>('/instance/create', {
+      method: 'POST',
+      body: JSON.stringify({
+        instanceName: input.instanceName,
+        qrcode: true,
+        integration: 'WHATSAPP-BAILEYS',
+        reject_call: true,
+        msg_call: 'No momento não atendemos chamadas por voz.',
+        groups_ignore: true,
+        always_online: true,
+        read_messages: true,
+        read_status: true,
+        syncFullHistory: false,
+        webhook: {
+          url: input.webhookUrl,
+          enabled: true,
+          webhookByEvents: false,
+          base64: false,
+          events: DEFAULT_WEBHOOK_EVENTS,
+        },
+      }),
+    });
+  } catch (err: unknown) {
+    if (err instanceof Error && (err.message.includes('403') || err.message.includes('already in use'))) {
+      console.warn(`[Evolution] Instância '${input.instanceName}' originou erro 403 "Fantasma". Usando fallback para acionar QR Code diretamente sem recriar.`);
+    } else {
+      throw err;
+    }
+  }
 
-  return fetchInstanceByName(input.instanceName);
+  const fetched = await fetchInstanceByName(input.instanceName);
+  
+  if (!fetched) {
+    // Retorno de fallback caso ela continue dando 404 no "Fetch" mas esteja lá com status 403 no "Create"
+    return {
+      instanceName: input.instanceName,
+      instanceId: input.instanceName,
+      owner: null,
+      profileName: null,
+      profilePictureUrl: null,
+      profileStatus: null,
+      status: 'connecting',
+      serverUrl: null,
+    };
+  }
+
+  return fetched;
+}
+
+export async function deleteInstance(instanceName: string): Promise<void> {
+  try {
+    await evolutionAdminFetch<unknown>(
+      `/instance/delete/${encodeURIComponent(instanceName)}`,
+      { method: 'DELETE' }
+    );
+  } catch (e: unknown) {
+    console.warn(`[Evolution] Falha ignorada ao deletar instância limpa:`, e);
+  }
 }
 
 export async function connectInstance(
@@ -234,11 +271,13 @@ export async function setWebhook(input: {
     {
       method: 'POST',
       body: JSON.stringify({
-        url: input.webhookUrl,
-        enabled: true,
-        webhookByEvents: false,
-        base64: false,
-        events: DEFAULT_WEBHOOK_EVENTS,
+        webhook: {
+          url: input.webhookUrl,
+          enabled: true,
+          webhookByEvents: false,
+          base64: false,
+          events: DEFAULT_WEBHOOK_EVENTS,
+        }
       }),
     }
   );
