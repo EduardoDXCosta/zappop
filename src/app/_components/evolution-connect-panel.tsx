@@ -75,7 +75,25 @@ export function EvolutionConnectPanel({ tenant }: EvolutionConnectPanelProps) {
     if (!res.ok) {
       throw new Error('error' in payload ? payload.error : 'Falha ao consultar instância');
     }
-    setData(payload as StatusResponse);
+    setData((prev) => {
+      const newPayload = payload as StatusResponse;
+      // Impede que o polling do status apague a imagem QR que foi obtida via POST momentaneamente
+      if (
+        prev &&
+        prev.instance?.qr &&
+        newPayload.instance?.qr === null &&
+        newPayload.instance?.connectionState !== 'open'
+      ) {
+        return {
+          ...newPayload,
+          instance: {
+            ...newPayload.instance,
+            qr: prev.instance.qr,
+          },
+        };
+      }
+      return newPayload;
+    });
   });
 
   useEffect(() => {
