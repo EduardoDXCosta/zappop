@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { parseEvolutionEvent } from '@/lib/evolution';
+import { handleIncomingMessage } from '@/lib/agent';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -26,13 +28,16 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'invalid json' }, { status: 400 });
     }
 
-    console.log(
-        '[evolution webhook]',
-        JSON.stringify(payload, null, 2).slice(0, 2000)
-    );
+    const parsed = parseEvolutionEvent(payload);
 
-    // TODO FASE 2: route event to attendance agent
-    // TODO FASE 3: route admin-number events to admin agent
+    if (parsed.event === 'ignored') {
+        return NextResponse.json({ ok: true, ignored: parsed.reason });
+    }
+
+    // Why: fire-and-forget so Evolution gets a 200 fast; errors are logged.
+    handleIncomingMessage(parsed).catch((err) => {
+        console.error('[webhook] agent error', err);
+    });
 
     return NextResponse.json({ ok: true });
 }
