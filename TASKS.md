@@ -6,7 +6,7 @@
 ---
 
 ## 📌 Status Geral do Projeto
-**Fase atual:** FASE 5 em andamento - onboarding do restaurante e conexão da Evolution já existem, faltando validação real e continuação do cardápio/painel.
+**Fase atual:** FASE 5 em andamento - onboarding do restaurante funcional e validado com dados reais salvos no banco. Conexão Evolution implementada. Falta validação real de QR Code e continuação do cardápio/painel.
 
 ---
 
@@ -21,6 +21,8 @@
 - [x] Definição do sistema de pagamento e bloqueio
 - [x] Definição do sistema de promoções e fidelidade
 - [x] Documentação completa do projeto (PROJECT.md)
+- [x] Formulário de onboarding testado e validado — dados fake salvos corretamente no PostgreSQL (tenant + horários)
+- [x] UI do onboarding refinada — chips de bandeira uniformizados, toggle Aberto/Fechado com visual distinto, botão simplificado
 
 ---
 
@@ -81,6 +83,8 @@
 
 ### FASE 5 - Onboarding
 - [x] Criar página de cadastro do restaurante *(`src/app/page.tsx` + `company-onboarding.tsx`)*
+- [x] Validar formulário com dados fake e confirmar persistência no banco *(tenant + tenant_hours salvos OK)*
+- [x] Refinar UI do onboarding *(chips uniformes, toggle Aberto/Fechado, botão "Continuar")*
 - [ ] Criar fluxo de escolha de plano
 - [ ] Integrar Asaas (pagamento recorrente)
 - [x] Criar fluxo de conexão do WhatsApp (QR Code) *(`src/app/_components/evolution-connect-panel.tsx` + rotas `/api/evolution/instances/*`)*
@@ -135,3 +139,6 @@
 | 11/04/2026 | Tela interna de conexão Evolution implementada com create/connect/logout/status por slug, usando segredos apenas no backend |
 | 11/04/2026 | Onboarding inicial do restaurante implementado antes da conexão do WhatsApp |
 | 11/04/2026 | Fix onboarding: chips de bandeira com estilo uniforme + toggle Aberto/Fechado no horário com visual rose para fechado |
+| 11/04/2026 | Botão de submit simplificado para "Continuar" |
+| 11/04/2026 | Teste E2E do formulário: dados fake preenchidos via browser, submetidos e confirmados no banco (tenant a3c70db7 + 6 horários Seg-Sáb 11h-22h) |
+| 11/04/2026 | z-index e pointer-events corrigidos no layout principal e painel Evolution |
