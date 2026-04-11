@@ -1,1 +1,4 @@
 @AGENTS.md
+@PROMPT_MASTER.md
+@PROJECT.md
+@TASKS.md
