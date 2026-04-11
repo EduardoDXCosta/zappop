@@ -88,6 +88,8 @@
 - [ ] Criar fluxo de escolha de plano
 - [ ] Integrar Asaas (pagamento recorrente)
 - [x] Criar fluxo de conexão do WhatsApp (QR Code) *(`src/app/_components/evolution-connect-panel.tsx` + rotas `/api/evolution/instances/*`)*
+- [x] **[BUG FIX]** Tratar resposta `404 Not Found` da Evolution ao buscar instâncias que ainda não existem como `null`, evitando crash na página de Onboarding.
+- [x] **[UI FIX]** Redesign da tela de Conexão: removido lixo técnico (webhooks, perfis, instâncias) para ser amigável ao dono do Restaurante.
 - [ ] Criar botão de suporte com notificação WhatsApp
 - [ ] Implementar trial de 7 dias
 - [x] Persistir dados iniciais do restaurante *(`src/app/api/onboarding/tenant/route.ts`)*
