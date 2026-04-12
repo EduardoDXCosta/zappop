@@ -88,17 +88,20 @@ function mapInstance(value: unknown): EvolutionInstanceSummary | null {
   const instance = asRecord(root?.instance) ?? root;
   if (!instance) return null;
 
-  const instanceName = asString(instance.instanceName);
+  // Evolution API v2 usa `name`, versões anteriores usavam `instanceName`.
+  const instanceName = asString(instance.instanceName) || asString(instance.name);
   if (!instanceName) return null;
+
+  const stateStr = asString(instance.status) || asString(instance.connectionStatus);
 
   return {
     instanceName,
-    instanceId: asString(instance.instanceId),
-    owner: asString(instance.owner),
+    instanceId: asString(instance.instanceId) || asString(instance.id),
+    owner: asString(instance.owner) || asString(instance.ownerJid),
     profileName: asString(instance.profileName),
-    profilePictureUrl: asString(instance.profilePictureUrl),
+    profilePictureUrl: asString(instance.profilePictureUrl) || asString(instance.profilePicUrl),
     profileStatus: asString(instance.profileStatus),
-    status: asString(instance.status),
+    status: stateStr ? (stateStr.toLowerCase() as EvolutionConnectionState['state']) : 'close',
     serverUrl: asString(instance.serverUrl),
   };
 }

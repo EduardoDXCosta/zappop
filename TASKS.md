@@ -85,12 +85,15 @@
 - [x] Criar página de cadastro do restaurante *(`src/app/page.tsx` + `company-onboarding.tsx`)*
 - [x] Validar formulário com dados fake e confirmar persistência no banco *(tenant + tenant_hours salvos OK)*
 - [x] Refinar UI do onboarding *(chips uniformes, toggle Aberto/Fechado, botão "Continuar")*
-- [ ] Criar fluxo de escolha de plano
-- [ ] Integrar Asaas (pagamento recorrente)
 - [x] Criar fluxo de conexão do WhatsApp (QR Code) *(`src/app/_components/evolution-connect-panel.tsx` + rotas `/api/evolution/instances/*`)*
 - [x] **[BUG FIX]** Tratar resposta `404 Not Found` da Evolution ao buscar instâncias que ainda não existem como `null`, evitando crash na página de Onboarding.
 - [x] **[UI FIX]** Redesign da tela de Conexão: removido lixo técnico (webhooks, perfis, instâncias) para ser amigável ao dono do Restaurante.
+- [x] **[BUG FIX]** Polling do frontend apagava QR Code. Componente React refatorado para realizar Functional Update do state e preservar a base64 da imagem.
+- [x] **[BUG FIX]** Polling não mudava tela para "Conectado": Corrigido modelo de extração JSON `mapInstance` e URL Root com endpoint limpo. A API V2 da Evolution usa `name` no lugar de `instanceName` silenciosamente.
+- [ ] Criar interface para Configuração do Cardápio (Próximo Passo imediato após o WhatsApp conectado)
 - [ ] Criar botão de suporte com notificação WhatsApp
+- [ ] Criar fluxo de escolha de plano
+- [ ] Integrar Asaas (pagamento recorrente)
 - [ ] Implementar trial de 7 dias
 - [x] Persistir dados iniciais do restaurante *(`src/app/api/onboarding/tenant/route.ts`)*
 - [x] Persistir horário de funcionamento inicial *(`replaceTenantHours`)*

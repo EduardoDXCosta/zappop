@@ -279,9 +279,19 @@ export function EvolutionConnectPanel({ tenant }: EvolutionConnectPanelProps) {
                   <p className="font-[family:var(--font-display)] text-3xl text-zinc-900 sm:text-4xl">
                     WhatsApp conectado!
                   </p>
-                  <p className="text-sm leading-6 text-zinc-600">
+                  <p className="text-sm leading-6 text-zinc-600 pb-2">
                     Tudo certo! O atendimento automatico ja esta funcionando. Se precisar trocar de aparelho, desconecte e gere um novo QR Code.
                   </p>
+                  <div className="pt-4 border-t border-dashed border-zinc-300">
+                    <button
+                      type="button"
+                      onClick={() => window.location.href = '#'}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-zinc-900 px-6 py-4 text-base font-semibold text-white transition hover:bg-zinc-800"
+                    >
+                      Continuar para a Configuração do Cardápio
+                      <span className="text-xl">➔</span>
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="max-w-sm space-y-3">
