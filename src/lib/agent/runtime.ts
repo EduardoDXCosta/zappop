@@ -7,8 +7,8 @@ import {
     getTenantHours,
     getTenantExceptions,
     upsertCustomer,
-    appendMessage,
-    getRecentMessages,
+    appendChat,
+    getRecentChats,
     getLastOrderByCustomer,
     getDefaultCustomerAddress,
 } from '@/lib/db/queries';
@@ -47,11 +47,11 @@ export async function handleIncomingMessage(
         return;
     }
 
-    await appendMessage({
+    await appendChat({
+        sessionId: msg.phoneE164,
         tenantId: tenant.id,
-        customerId: customer.id,
         role: 'user',
-        content: msg.text,
+        message: { content: msg.text },
     });
 
     const hours = await getTenantHours(tenant.id);
@@ -74,7 +74,7 @@ export async function handleIncomingMessage(
     const [lastOrder, defaultAddress, history] = await Promise.all([
         getLastOrderByCustomer(customer.id),
         getDefaultCustomerAddress(customer.id),
-        getRecentMessages(customer.id, MAX_HISTORY),
+        getRecentChats(msg.phoneE164, MAX_HISTORY),
     ]);
 
     const nowLocal = new Intl.DateTimeFormat('pt-BR', {
@@ -98,7 +98,7 @@ export async function handleIncomingMessage(
         .filter((m) => m.role === 'user' || m.role === 'assistant')
         .map((m) => ({
             role: m.role as 'user' | 'assistant',
-            content: m.content,
+            content: m.message.content,
         }));
 
     try {
@@ -158,12 +158,13 @@ async function runAgentLoop(
             .map((r) => `[tool:${r.name}] ${r.content}`)
             .join('\n');
 
-        await appendMessage({
+        await appendChat({
+            sessionId: customer.phone,
             tenantId: tenant.id,
-            customerId: customer.id,
-            role: 'tool',
-            content: toolSummary,
-            metadata: {
+            role: null,
+            message: {
+                content: toolSummary,
+                type: 'tool_result',
                 toolCalls: response.toolCalls,
             },
         });
@@ -196,10 +197,10 @@ async function sendAndLog(
     } catch (err) {
         console.error('[agent] failed to send via evolution', err);
     }
-    await appendMessage({
+    await appendChat({
+        sessionId: msg.phoneE164,
         tenantId: tenant.id,
-        customerId: customer.id,
         role: 'assistant',
-        content: text,
+        message: { content: text },
     });
 }

@@ -6,7 +6,7 @@
 ---
 
 ## 📌 Status Geral do Projeto
-**Fase atual:** FASE 5 em andamento - onboarding do restaurante funcional e validado com dados reais salvos no banco. Conexão Evolution implementada. Falta validação real de QR Code e continuação do cardápio/painel.
+**Fase atual:** FASE 4 e 5 avançando em paralelo — Dashboard unificado com sidebar implementado, sistema de roles (ADMIN/OWNER) no banco, galeria global de produtos, edição inline de cardápio, cockpit de métricas admin e modo impersonate. Falta validação E2E com Evolution e autenticação real.
 
 ---
 
@@ -23,6 +23,16 @@
 - [x] Documentação completa do projeto (PROJECT.md)
 - [x] Formulário de onboarding testado e validado — dados fake salvos corretamente no PostgreSQL (tenant + horários)
 - [x] UI do onboarding refinada — chips de bandeira uniformizados, toggle Aberto/Fechado com visual distinto, botão simplificado
+- [x] Migration `0002_roles_and_global_products.sql` — tabela `users` com role (admin/owner), tabela `global_products`, coluna `products.global_product_id`
+- [x] Dashboard unificado com sidebar dinâmica por role (ADMIN vs OWNER) — substitui onboarding passo-a-passo
+- [x] Sistema de roles: ADMIN (plataforma) e OWNER (restaurante) com session context e guards
+- [x] Modo Impersonate: ADMIN pode visualizar o painel como qualquer tenant via cookie seguro
+- [x] Galeria Global de Produtos: ADMIN cadastra itens mestre, OWNER importa em massa por nicho com 1 clique
+- [x] MenuBuilder refatorado: edição inline de preços (click-to-edit), toggle de disponibilidade, aba Galeria Global com filtro por nicho e "Selecionar Tudo"
+- [x] Cockpit Admin com métricas: GMV (dia/mês), Taxa de Conversão IA, Top 5 Restaurantes, Instâncias Offline, Taxa de Falha IA, Tempo Médio de Resposta
+- [x] API routes: PATCH produtos (preço/disponibilidade), clone de produto global, CRUD global-products, métricas admin, impersonate
+- [x] Página de Restaurantes (Admin): lista todos os tenants com plano, status e botão impersonar
+- [x] Página de Configurações (Owner): visualização das informações do restaurante
 
 ---
 
@@ -70,14 +80,14 @@
 - [ ] Implementar cardápio do dia via WhatsApp
 
 ### FASE 4 - Painel Web
-- [ ] Criar estrutura completa do painel Next.js
-- [ ] Implementar autenticação do dono
+- [x] Criar estrutura completa do painel Next.js *(`/dashboard` com layout + sidebar dinâmica por role)*
+- [x] Implementar gestão de cardápio no painel *(MenuBuilder com edição inline de preços e disponibilidade)*
+- [ ] Implementar autenticação real do dono (login por telefone/OTP)
 - [ ] Implementar KDS (pedidos em tempo real)
 - [ ] Implementar mudança de status do pedido no painel
 - [ ] Implementar notificação automática ao cliente quando status muda
 - [ ] Implementar impressão térmica
 - [ ] Implementar impressão normal
-- [ ] Implementar gestão de cardápio no painel
 - [ ] Implementar gestão de clientes e bloqueio
 - [ ] Implementar checklist visual de onboarding
 
@@ -90,7 +100,7 @@
 - [x] **[UI FIX]** Redesign da tela de Conexão: removido lixo técnico (webhooks, perfis, instâncias) para ser amigável ao dono do Restaurante.
 - [x] **[BUG FIX]** Polling do frontend apagava QR Code. Componente React refatorado para realizar Functional Update do state e preservar a base64 da imagem.
 - [x] **[BUG FIX]** Polling não mudava tela para "Conectado": Corrigido modelo de extração JSON `mapInstance` e URL Root com endpoint limpo. A API V2 da Evolution usa `name` no lugar de `instanceName` silenciosamente.
-- [ ] Criar interface para Configuração do Cardápio (Próximo Passo imediato após o WhatsApp conectado)
+- [x] Criar interface para Configuração do Cardápio *(`/dashboard/menu` com MenuBuilder refatorado — edição inline, galeria global)*
 - [ ] Criar botão de suporte com notificação WhatsApp
 - [ ] Criar fluxo de escolha de plano
 - [ ] Integrar Asaas (pagamento recorrente)
@@ -147,3 +157,10 @@
 | 11/04/2026 | Botão de submit simplificado para "Continuar" |
 | 11/04/2026 | Teste E2E do formulário: dados fake preenchidos via browser, submetidos e confirmados no banco (tenant a3c70db7 + 6 horários Seg-Sáb 11h-22h) |
 | 11/04/2026 | z-index e pointer-events corrigidos no layout principal e painel Evolution |
+| 12/04/2026 | Migration 0002: tabela `users` (role admin/owner) + `global_products` + `products.global_product_id` |
+| 12/04/2026 | Dashboard unificado substitui onboarding passo-a-passo. Sidebar dinâmica por role. |
+| 12/04/2026 | Galeria Global: Admin cadastra itens mestre, Owner importa em massa por nicho |
+| 12/04/2026 | Edição inline de preços e disponibilidade no cardápio (sem modais para edições simples) |
+| 12/04/2026 | Cockpit Admin: GMV, conversão IA, top restaurantes, instâncias offline, falha IA, tempo resposta |
+| 12/04/2026 | Modo Impersonate: Admin visualiza como qualquer tenant via cookie httpOnly |
+| 12/04/2026 | Session context em `src/lib/auth/` — prepara para autenticação real futura sem tocar nas pages |

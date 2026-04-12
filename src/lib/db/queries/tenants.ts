@@ -306,6 +306,13 @@ export async function getTenantHours(
     return rows;
 }
 
+export async function getAllTenants(): Promise<Tenant[]> {
+    const rows = await sql<TenantRow[]>`
+        select ${tenantSelect} from tenants order by created_at desc
+    `;
+    return rows.map(mapTenant);
+}
+
 export async function getTenantExceptions(
     tenantId: string,
     fromDate: string,

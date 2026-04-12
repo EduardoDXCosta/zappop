@@ -120,15 +120,20 @@ export interface ProductAddon {
     sortOrder: number;
 }
 
-export type ConversationRole = 'user' | 'assistant' | 'system' | 'tool';
+export type ChatRole = 'user' | 'assistant';
 
-export interface Conversation {
-    id: string;
-    tenantId: string;
-    customerId: string;
-    role: ConversationRole;
+export interface ChatMessage {
     content: string;
-    metadata: unknown;
+    type?: string;
+    toolCalls?: unknown;
+}
+
+export interface Chat {
+    id: number;
+    sessionId: string;
+    tenantId: string | null;
+    role: ChatRole | null;
+    message: ChatMessage;
     createdAt: string;
 }
 
@@ -172,4 +177,28 @@ export interface OrderItem {
     unitPrice: number;
     subtotal: number;
     notes: string | null;
+}
+
+// ── Roles ──────────────────────────────────────────────────
+export type UserRole = 'admin' | 'owner';
+
+export interface User {
+    id: string;
+    phone: string;
+    name: string;
+    email: string | null;
+    role: UserRole;
+    tenantId: string | null;
+    createdAt: string;
+}
+
+// ── Global Products ────────────────────────────────────────
+export interface GlobalProduct {
+    id: string;
+    name: string;
+    description: string | null;
+    imageUrl: string | null;
+    category: string;
+    createdAt: string;
+    updatedAt: string;
 }

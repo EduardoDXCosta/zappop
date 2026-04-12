@@ -285,7 +285,7 @@ export function EvolutionConnectPanel({ tenant }: EvolutionConnectPanelProps) {
                   <div className="pt-4 border-t border-dashed border-zinc-300">
                     <button
                       type="button"
-                      onClick={() => window.location.href = '#'}
+                      onClick={() => window.location.href = '/onboarding/menu'}
                       className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-zinc-900 px-6 py-4 text-base font-semibold text-white transition hover:bg-zinc-800"
                     >
                       Continuar para a Configuração do Cardápio
