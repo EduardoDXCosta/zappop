@@ -179,6 +179,16 @@ export interface OrderItem {
     notes: string | null;
 }
 
+export interface CartSession {
+    id: number;
+    sessionId: string;
+    tenantId: string;
+    lastActive: string;
+    hasOrder: boolean;
+    recovered: boolean;
+    createdAt: string;
+}
+
 // ── Roles ──────────────────────────────────────────────────
 export type UserRole = 'admin' | 'owner';
 
@@ -190,6 +200,17 @@ export interface User {
     role: UserRole;
     tenantId: string | null;
     createdAt: string;
+}
+
+export interface HumanTakeover {
+    id: number;
+    sessionId: string;
+    tenantId: string;
+    pausedBy: string | null;
+    pausedAt: string;
+    expiresAt: string;
+    releasedAt: string | null;
+    active: boolean;
 }
 
 // ── Global Products ────────────────────────────────────────

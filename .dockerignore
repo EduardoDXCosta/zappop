@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.gitignore
+.env*
+*.md
+.claude
+.kilo
+.agent
+docker-compose*.yml
+Dockerfile*
+*.tsbuildinfo

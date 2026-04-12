@@ -109,6 +109,7 @@ export interface ToolExecContext {
     tenant: Tenant;
     customer: Customer;
     defaultAddress: CustomerAddress | null;
+    sessionId: string;
 }
 
 export interface ToolResult {

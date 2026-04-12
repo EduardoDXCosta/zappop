@@ -11,6 +11,10 @@ import {
     getRecentChats,
     getLastOrderByCustomer,
     getDefaultCustomerAddress,
+    upsertCartSession,
+    markCartOrdered,
+    getActiveTakeover,
+    releaseTakeover,
 } from '@/lib/db/queries';
 import { isOpenNow, formatHoursHuman } from '@/lib/hours';
 import type { Tenant, Customer, CustomerAddress } from '@/lib/db/types';
@@ -47,12 +51,30 @@ export async function handleIncomingMessage(
         return;
     }
 
+    const takeover = await getActiveTakeover(msg.phoneE164);
+    if (takeover) {
+        if (new Date(takeover.expiresAt) < new Date()) {
+            await releaseTakeover(msg.phoneE164);
+        } else {
+            await appendChat({
+                sessionId: msg.phoneE164,
+                tenantId: tenant.id,
+                role: 'user',
+                message: { content: msg.text },
+            });
+            console.log(`[agent] session ${msg.phoneE164} under human takeover, skipping AI`);
+            return;
+        }
+    }
+
     await appendChat({
         sessionId: msg.phoneE164,
         tenantId: tenant.id,
         role: 'user',
         message: { content: msg.text },
     });
+
+    await upsertCartSession(msg.phoneE164, tenant.id);
 
     const hours = await getTenantHours(tenant.id);
     const hoursHuman = formatHoursHuman(hours);
@@ -114,7 +136,8 @@ export async function handleIncomingMessage(
         aiMessages,
         tenant,
         customer,
-        defaultAddress
+        defaultAddress,
+        msg.phoneE164
     );
 
     if (reply.trim().length > 0) {
@@ -128,7 +151,8 @@ async function runAgentLoop(
     messages: AIMessage[],
     tenant: Tenant,
     customer: Customer,
-    defaultAddress: CustomerAddress | null
+    defaultAddress: CustomerAddress | null,
+    sessionId: string
 ): Promise<string> {
     let workingMessages = [...messages];
     let finalText = '';
@@ -150,9 +174,16 @@ async function runAgentLoop(
 
         const toolResults = await Promise.all(
             response.toolCalls.map((call) =>
-                executeToolCall(call, { tenant, customer, defaultAddress })
+                executeToolCall(call, { tenant, customer, defaultAddress, sessionId })
             )
         );
+
+        const createdOrder = response.toolCalls.find(
+            (call, i) => call.name === 'create_order' && !JSON.parse(toolResults[i].content).error
+        );
+        if (createdOrder) {
+            await markCartOrdered(sessionId);
+        }
 
         const toolSummary = toolResults
             .map((r) => `[tool:${r.name}] ${r.content}`)

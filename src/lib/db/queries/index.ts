@@ -6,3 +6,5 @@ export * from './orders';
 export * from './users';
 export * from './global-products';
 export * from './metrics';
+export * from './cart-sessions';
+export * from './human-takeovers';

@@ -6,7 +6,7 @@
 ---
 
 ## 📌 Status Geral do Projeto
-**Fase atual:** FASE 4 e 5 avançando em paralelo — Dashboard unificado com sidebar implementado, sistema de roles (ADMIN/OWNER) no banco, galeria global de produtos, edição inline de cardápio, cockpit de métricas admin e modo impersonate. Falta validação E2E com Evolution e autenticação real.
+**Fase atual:** FASE 4 e 5 avançando em paralelo + FASE 4.5 (Features de Diferenciação) + Infra Docker/EasyPanel. Dashboard unificado com sidebar, roles, galeria global, edição inline de cardápio, cockpit admin e impersonate. Nova tabela `chats` (session_id-based). Features planejadas: Intervenção Humana, Upsell Automático, Carrinho Abandonado, Indisponibilidade Relâmpago, Modo Teste. Infra: Docker + next.config standalone para deploy EasyPanel. Falta validação E2E, autenticação real e deploy Docker.
 
 ---
 
@@ -33,6 +33,8 @@
 - [x] API routes: PATCH produtos (preço/disponibilidade), clone de produto global, CRUD global-products, métricas admin, impersonate
 - [x] Página de Restaurantes (Admin): lista todos os tenants com plano, status e botão impersonar
 - [x] Página de Configurações (Owner): visualização das informações do restaurante
+- [x] Migration `0003_chats_table.sql` — tabela `chats` substituindo `conversations` com session_id, message jsonb e id bigint identity
+- [x] Agente atualizado para usar session_id (número do WhatsApp) em vez de customer_id como chave de conversa
 
 ---
 
@@ -91,6 +93,13 @@
 - [ ] Implementar gestão de clientes e bloqueio
 - [ ] Implementar checklist visual de onboarding
 
+### FASE 4.5 - Features de Diferenciação
+- [x] Feature: Botão de Intervenção Humana — dono pausa IA por 30 min e assume conversa pelo painel *(migration 0004, takeover API, conversations page)*
+- [x] Feature: Upsell Automático — IA sugere combos/adicionais naturalmente durante o pedido *(regras 13-14 no prompt)*
+- [x] Feature: Recuperação de Carrinho Abandonado — mensagem automática após 20 min sem resposta *(migration 0005, cart_sessions, cron endpoint)*
+- [x] Feature: Gestão de Indisponibilidade Relâmpago — toggle ON/OFF por produto no painel *(já implementado via MenuBuilder inline)*
+- [x] Feature: Modo Teste (Simulador) — chat de teste no painel para o dono testar o robô *(test-runtime, test-chat page)*
+
 ### FASE 5 - Onboarding
 - [x] Criar página de cadastro do restaurante *(`src/app/page.tsx` + `company-onboarding.tsx`)*
 - [x] Validar formulário com dados fake e confirmar persistência no banco *(tenant + tenant_hours salvos OK)*
@@ -134,6 +143,16 @@
 
 ---
 
+## 🔧 Infraestrutura
+
+- [x] Configurar Docker para deploy no EasyPanel (Dockerfile, docker-compose.yml)
+- [x] Configurar next.config.ts com output standalone
+- [x] Criar .dockerignore
+- [x] Criar docker-entrypoint.sh (migrate + start)
+- [x] Criar .env.production.example
+
+---
+
 ## 📝 Notas e decisões importantes
 
 | Data | Decisão |
@@ -164,3 +183,6 @@
 | 12/04/2026 | Cockpit Admin: GMV, conversão IA, top restaurantes, instâncias offline, falha IA, tempo resposta |
 | 12/04/2026 | Modo Impersonate: Admin visualiza como qualquer tenant via cookie httpOnly |
 | 12/04/2026 | Session context em `src/lib/auth/` — prepara para autenticação real futura sem tocar nas pages |
+| 12/04/2026 | Migration 0003: tabela `chats` substitui `conversations` — session_id-based para separação por WhatsApp |
+| 12/04/2026 | Features de diferenciação: Intervenção Humana, Upsell, Carrinho Abandonado, Indisponibilidade Relâmpago, Modo Teste |
+| 12/04/2026 | Infra Docker/EasyPanel: output standalone, Dockerfile multi-stage, docker-compose com PostgreSQL |

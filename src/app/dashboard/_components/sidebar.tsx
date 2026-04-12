@@ -11,8 +11,10 @@ type NavItem = {
 
 const ownerNav: NavItem[] = [
   { href: '/dashboard', label: 'Visao Geral', icon: '📊' },
+  { href: '/dashboard/conversations', label: 'Conversas', icon: '💬' },
   { href: '/dashboard/menu', label: 'Cardapio', icon: '🍔' },
   { href: '/dashboard/whatsapp', label: 'WhatsApp', icon: '📱' },
+  { href: '/dashboard/test-chat', label: 'Modo Teste', icon: '🧪' },
   { href: '/dashboard/settings', label: 'Configuracoes', icon: '⚙️' },
 ];
 
