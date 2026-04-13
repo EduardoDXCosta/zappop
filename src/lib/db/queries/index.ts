@@ -9,3 +9,4 @@ export * from './metrics';
 export * from './cart-sessions';
 export * from './human-takeovers';
 export * from './session-tokens';
+export * from './setup';
