@@ -22,9 +22,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 COPY --from=builder /app/db ./db
 COPY --from=builder /app/node_modules/postgres ./node_modules/postgres
-COPY --from=builder /app/node_modules/pg-connection-string ./node_modules/pg-connection-string 2>/dev/null || true
-
-RUN chmod +x docker-entrypoint.sh 2>/dev/null || true
 
 USER nextjs
 
@@ -32,4 +29,7 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-ENTRYPOINT ["sh", "-c", "node db/migrate.mjs && exec node server.js"]
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
+
+CMD ["sh", "-c", "node db/migrate.mjs 2>&1 || true && exec node server.js"]
