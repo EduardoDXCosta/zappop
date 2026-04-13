@@ -1,6 +1,7 @@
 import { getSessionContext } from '@/lib/auth';
 import { Sidebar } from './_components/sidebar';
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,10 @@ export default async function DashboardLayout({
   const impersonateId = cookieStore.get('impersonate_tenant')?.value ?? null;
 
   const session = await getSessionContext(impersonateId);
+
+  if (!session.user) {
+    redirect('/login');
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#090b11]">

@@ -199,6 +199,16 @@ export interface User {
     email: string | null;
     role: UserRole;
     tenantId: string | null;
+    passwordHash: string | null;
+    lastLogin: string | null;
+    createdAt: string;
+}
+
+export interface SessionToken {
+    id: number;
+    userId: string;
+    token: string;
+    expiresAt: string;
     createdAt: string;
 }
 

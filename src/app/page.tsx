@@ -1,13 +1,19 @@
 import { getDefaultTenantForApp } from '@/lib/db/queries';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { CompanyOnboarding } from './_components/company-onboarding';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Home() {
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get('session_token')?.value;
+  if (sessionToken) {
+    redirect('/dashboard');
+  }
+
   const tenant = await getDefaultTenantForApp();
 
-  // If tenant already exists, go to dashboard
   if (tenant) {
     redirect('/dashboard');
   }

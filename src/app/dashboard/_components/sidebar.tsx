@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { LogoutButton } from './logout-button';
 
 type NavItem = {
   href: string;
@@ -113,6 +114,7 @@ export function Sidebar({ role, tenantName, userName, impersonating }: SidebarPr
             </span>
           </div>
         </div>
+        <LogoutButton />
       </div>
     </aside>
   );
