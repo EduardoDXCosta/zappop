@@ -5,23 +5,32 @@ declare global {
     var __pgClient: ReturnType<typeof postgres> | undefined;
 }
 
-const connectionString = process.env.DATABASE_URL;
-
-if (!connectionString && process.env.NEXT_PHASE !== 'phase-production-build') {
-    throw new Error(
-        'DATABASE_URL is not set. Copy .env.local.example to .env.local and fill it in.'
-    );
-}
-
-export const sql =
-    global.__pgClient ??
-    postgres(connectionString ?? 'postgres://placeholder:5432/placeholder', {
+function createClient(): ReturnType<typeof postgres> {
+    const connectionString = process.env.DATABASE_URL;
+    if (!connectionString) {
+        throw new Error(
+            'DATABASE_URL is not set. Copy .env.local.example to .env.local and fill it in.'
+        );
+    }
+    return postgres(connectionString, {
         max: 10,
         idle_timeout: 20,
         connect_timeout: 10,
         prepare: true,
     });
-
-if (process.env.NODE_ENV !== 'production') {
-    global.__pgClient = sql;
 }
+
+function getClient(): ReturnType<typeof postgres> {
+    if (!global.__pgClient) {
+        global.__pgClient = createClient();
+    }
+    return global.__pgClient;
+}
+
+export const sql = new Proxy({} as ReturnType<typeof postgres>, {
+    get(_target, prop: string | symbol) {
+        const client = getClient();
+        const value = Reflect.get(client, prop, client);
+        return typeof value === 'function' ? (value as Function).bind(client) : value;
+    },
+});
