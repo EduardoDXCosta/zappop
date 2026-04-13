@@ -2,6 +2,8 @@ import { getDefaultTenantForApp } from '@/lib/db/queries';
 import { redirect } from 'next/navigation';
 import { CompanyOnboarding } from './_components/company-onboarding';
 
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
   const tenant = await getDefaultTenantForApp();
 

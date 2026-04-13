@@ -2,6 +2,8 @@ import { getDefaultTenantForApp } from '@/lib/db/queries';
 import { redirect } from 'next/navigation';
 import { MenuBuilder } from '@/app/_components/menu-builder';
 
+export const dynamic = 'force-dynamic';
+
 export default async function OnboardingMenuPage() {
   const tenant = await getDefaultTenantForApp();
 

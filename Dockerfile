@@ -1,5 +1,7 @@
 FROM node:22-alpine AS builder
 WORKDIR /app
+ARG DATABASE_URL=postgres://placeholder:5432/placeholder
+ENV DATABASE_URL=$DATABASE_URL
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
@@ -15,7 +17,6 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/db ./db
-COPY --from=builder /app/next.config.ts ./
 
 RUN npm install postgres --no-save 2>/dev/null || true
 
