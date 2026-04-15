@@ -110,7 +110,7 @@ export default function LoginPage() {
 
         <p className="mt-4 text-center text-sm text-slate-500">
           Primeiro acesso?{' '}
-          <Link href="/" className="text-amber-400 hover:underline">
+          <Link href="/onboarding" className="text-amber-400 hover:underline">
             Cadastre seu restaurante
           </Link>
         </p>
