@@ -1,9 +1,11 @@
 services:
-  app:
-    build: .
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3001:3001"
     environment:
       DATABASE_URL: ${DATABASE_URL}
       EVOLUTION_API_URL: ${EVOLUTION_API_URL:-}
@@ -17,3 +19,26 @@ services:
       APP_ADMIN_PHONE: ${APP_ADMIN_PHONE:-}
       ASAAS_API_KEY: ${ASAAS_API_KEY:-}
       ASAAS_ENV: ${ASAAS_ENV:-sandbox}
+    networks:
+      - whatsmenu
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        DATABASE_URL: postgres://placeholder:placeholder@localhost:5432/placeholder
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://api:3001
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      - api
+    networks:
+      - whatsmenu
+
+networks:
+  whatsmenu:
+    driver: bridge

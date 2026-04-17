@@ -5,7 +5,7 @@
 ---
 
 ## 📌 Status Geral do Projeto
-**Fase atual:** Deploy EasyPanel em andamento. Autenticação real implementada (login/setup com senha). Galeria global com 340+ produtos em 20 categorias. Features de diferenciação completas. Falta: validação E2E com Evolution, KDS, integração Asaas.
+**Fase atual:** Refactor monorepo Turborepo concluído (apps/api Fastify 3001 + apps/web Next.js 3000 + packages/shared). TypeScript sem erros. Docker/EasyPanel pronto. Banco PostgreSQL no EasyPanel com 25 tabelas (19 init + users, global_products, chats, human_takeovers, cart_sessions, session_tokens). Falta: validação E2E com Evolution, KDS, integração Asaas.
 
 ---
 
@@ -57,6 +57,12 @@
 - [x] Migration 0007: seed de 140+ produtos de hamburgueria na galeria global
 - [x] Migration 0008: seed de 200+ produtos de pizzaria, açaí, japonesa, marmita, padaria, crepes, salgados, doces, drinks, espetinhos, fitness, combos
 - [x] Galeria global com 340+ produtos em 20 categorias
+- [x] Refactor monorepo Turborepo: apps/api (Fastify 5, porta 3001) + apps/web (Next.js, porta 3000) + packages/shared (tipos compartilhados)
+- [x] TypeScript sem erros no apps/api (tsc --noEmit passa limpo)
+- [x] Correção de todos os imports corrompidos (UTF-16LE) em lib/agent/ e lib/ai/
+- [x] Migração de fetch direto para api-client em 11 arquivos do frontend
+- [x] Dockerfiles separados para api (Dockerfile.api) e web (Dockerfile.web)
+- [x] docker-compose.yml atualizado com 2 serviços na rede whatsmenu
 
 ---
 
@@ -208,3 +214,7 @@
 | 14/04/2026 | Página /onboarding separada do /login para cadastro de restaurante |
 | 14/04/2026 | Galeria global com 340+ produtos em 20 categorias (hamburgueria, pizza, açaí, japonesa, marmita, padaria, crepes, salgados, doces, drinks, fitness, etc.) |
 | 14/04/2026 | Deploy EasyPanel: build passando, container subindo — ajustes de .dockerignore e force-dynamic |
+| 17/04/2026 | Refactor monorepo Turborepo: Next.js monolith → apps/api (Fastify 5) + apps/web + packages/shared |
+| 17/04/2026 | Banco PostgreSQL no EasyPanel com 25 tabelas criadas via migrations 0001-0006 |
+| 17/04/2026 | TypeScript limpo no apps/api — todos imports corrigidos, arquivos corrompidos reescritos |
+| 17/04/2026 | Dockerfiles separados Dockerfile.api e Dockerfile.web para deploy independente |

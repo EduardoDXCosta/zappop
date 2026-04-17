@@ -1,0 +1,59 @@
+# ── Stage 1: builder ──────────────────────────────────────────────────────────
+FROM node:22-alpine AS builder
+WORKDIR /app
+
+# DATABASE_URL is required by Next.js at build time when importing db modules.
+# Pass a dummy value here — the real value is injected at runtime via env.
+ARG DATABASE_URL=postgres://placeholder:placeholder@localhost:5432/placeholder
+ENV DATABASE_URL=$DATABASE_URL
+
+# Copy root workspace manifests
+COPY package.json package-lock.json ./
+
+# Copy workspace package manifests
+COPY packages/shared/package.json ./packages/shared/package.json
+COPY apps/web/package.json ./apps/web/package.json
+
+# Install all deps
+RUN npm ci --workspace=apps/web --workspace=packages/shared --include-workspace-root
+
+# Copy shared package source
+COPY packages/shared/ ./packages/shared/
+
+# Copy Next.js app source
+COPY apps/web/ ./apps/web/
+
+# Build Next.js (output: standalone)
+WORKDIR /app/apps/web
+RUN npm run build
+
+# ── Stage 2: runner ───────────────────────────────────────────────────────────
+FROM node:22-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Copy the standalone server output (self-contained, includes node_modules)
+COPY --from=builder /app/apps/web/.next/standalone ./
+
+# Copy static assets — Next.js standalone serves them from .next/static
+# In a workspace build, the path inside the standalone dir mirrors the monorepo.
+# Both flat (root) and nested (apps/web/) layouts are handled by trying both.
+COPY --from=builder /app/apps/web/.next/static ./.next/static
+
+# Copy public assets
+COPY --from=builder /app/apps/web/public ./public
+
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs && \
+    chown -R nextjs:nodejs /app
+
+USER nextjs
+
+EXPOSE 3000
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+
+# Next.js standalone places server.js at the root of the standalone directory.
+# In a workspace monorepo the standalone output is already self-contained here.
+CMD ["node", "server.js"]
