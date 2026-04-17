@@ -3,7 +3,7 @@ import {
   EvolutionInstanceSummary,
   EvolutionQrPayload,
   EvolutionWebhookConfig,
-} from './types';
+} from './types.js';
 
 const DEFAULT_WEBHOOK_EVENTS = [
   'MESSAGES_UPSERT',

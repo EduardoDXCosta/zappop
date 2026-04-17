@@ -2,7 +2,7 @@ import type {
   EvolutionIncomingMessage,
   EvolutionParsedEvent,
   EvolutionRawEvent,
-} from './types';
+} from './types.js';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;

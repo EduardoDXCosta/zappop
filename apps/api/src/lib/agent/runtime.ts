@@ -18,8 +18,8 @@ import {
 } from '../../db/queries/index.js';
 import { isOpenNow, formatHoursHuman } from '../hours.js';
 import type { Tenant, Customer, CustomerAddress } from '../../db/types.js';
-import { buildSystemPrompt } from './prompt';
-import { agentTools, executeToolCall } from './tools';
+import { buildSystemPrompt } from './prompt.js';
+import { agentTools, executeToolCall } from './tools.js';
 
 const MAX_HISTORY = 20;
 const MAX_TOOL_ROUNDS = 3;

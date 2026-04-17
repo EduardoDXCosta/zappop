@@ -4,7 +4,7 @@ import type {
   AIChatResponse,
   AIProvider,
   AIToolCall,
-} from './types';
+} from './types.js';
 
 const DEFAULT_MODEL = 'claude-sonnet-4-5';
 

@@ -1,9 +1,9 @@
-import type { AIProvider, AIProviderName } from './types';
-import { claudeProvider } from './claude';
-import { openaiProvider } from './openai';
-import { geminiProvider } from './gemini';
+import type { AIProvider, AIProviderName } from './types.js';
+import { claudeProvider } from './claude.js';
+import { openaiProvider } from './openai.js';
+import { geminiProvider } from './gemini.js';
 
-export * from './types';
+export * from './types.js';
 export { claudeProvider, openaiProvider, geminiProvider };
 
 const providers: Record<AIProviderName, AIProvider> = {
