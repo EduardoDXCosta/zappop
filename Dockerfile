@@ -1,33 +1,59 @@
+# ── Stage 1: builder ──────────────────────────────────────────────────────────
 FROM node:22-alpine AS builder
 WORKDIR /app
-ARG DATABASE_URL=postgres://placeholder:5432/placeholder
-ENV DATABASE_URL=$DATABASE_URL
+
+# Copy root workspace manifests first (needed for npm workspaces)
 COPY package.json package-lock.json ./
-RUN npm ci
-COPY . .
+
+# Copy workspace package manifests so npm ci can resolve all workspaces
+COPY packages/shared/package.json ./packages/shared/package.json
+COPY apps/api/package.json ./apps/api/package.json
+
+# Install all deps (including devDeps for tsc)
+RUN npm ci --workspace=apps/api --workspace=packages/shared --include-workspace-root
+
+# Copy shared package source and compile it
+COPY packages/shared/ ./packages/shared/
+RUN npm run build --workspace=packages/shared 2>/dev/null || true
+
+# Copy API source and compile TypeScript
+COPY apps/api/ ./apps/api/
+WORKDIR /app/apps/api
 RUN npm run build
 
+# ── Stage 2: runner ───────────────────────────────────────────────────────────
 FROM node:22-alpine AS runner
 WORKDIR /app
+
 ENV NODE_ENV=production
 
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/package-lock.json ./
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/db ./db
+# Copy root manifest for workspace resolution
+COPY package.json package-lock.json ./
+COPY packages/shared/package.json ./packages/shared/package.json
+COPY apps/api/package.json ./apps/api/package.json
 
-RUN npm install postgres --no-save 2>/dev/null || true
+# Install only production deps
+RUN npm ci --workspace=apps/api --workspace=packages/shared --include-workspace-root --omit=dev
+
+# Copy compiled API output
+COPY --from=builder /app/apps/api/dist ./apps/api/dist
+
+# Copy shared package (runtime types, if needed at runtime)
+COPY --from=builder /app/packages/shared ./packages/shared
+
+# Copy DB migration scripts (runs at startup)
+COPY apps/api/db ./apps/api/db
 
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs && \
-    chown -R nextjs:nodejs /app
+    adduser --system --uid 1001 apiuser && \
+    chown -R apiuser:nodejs /app
 
-USER nextjs
+USER apiuser
 
-EXPOSE 3000
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
+WORKDIR /app/apps/api
 
-CMD ["sh", "-c", "echo '=== Running migrations ===' && node db/migrate.mjs 2>&1; echo '=== Starting server ===' && exec node server.js"]
+EXPOSE 3001
+ENV PORT=3001
+ENV HOST=0.0.0.0
+
+CMD ["sh", "-c", "echo '=== Running migrations ===' && node db/migrate.mjs 2>&1; echo '=== Starting API ===' && exec node dist/server.js"]
