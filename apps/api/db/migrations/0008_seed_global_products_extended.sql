@@ -163,7 +163,7 @@ insert into global_products (name, description, category) values
 ('Panqueca de Queijo', 'Panqueca de queijo com molho', 'Crepes'),
 
 -- ═══════════════════════════════════════════════════════════════
-# PASTEL (JÁ EXISTE NA 0007, ADICIONAR MAIS)
+-- PASTEL (JÁ EXISTE NA 0007, ADICIONAR MAIS)
 -- ═══════════════════════════════════════════════════════════════
 ('Pastel de Queijo Grande', 'Pastel grande recheado com queijo', 'Pastéis'),
 ('Pastel de Carne Grande', 'Pastel grande recheado com carne moída', 'Pastéis'),
@@ -263,7 +263,7 @@ insert into global_products (name, description, category) values
 ('Bloody Mary', 'Vodka, suco de tomate e temperos', 'Drinks com Álcool'),
 
 -- ═══════════════════════════════════════════════════════════════
-# VINHOS
+-- VINHOS
 -- ═══════════════════════════════════════════════════════════════
 ('Vinho Tinto Taça', 'Taça de vinho tinto da casa', 'Vinhos'),
 ('Vinho Branco Taça', 'Taça de vinho branco da casa', 'Vinhos'),

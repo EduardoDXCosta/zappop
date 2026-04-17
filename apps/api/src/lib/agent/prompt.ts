@@ -4,9 +4,9 @@ import type {
     CustomerAddress,
     Order,
     OrderItem,
-} from '@/db/types';
-import type { IsOpenResult } from '@/lib/hours';
-import { formatBRL } from '@/lib/pricing';
+} from '../../db/types.js';
+import type { IsOpenResult } from '../hours.js';
+import { formatBRL } from '../pricing.js';
 
 export interface BuildSystemPromptInput {
     tenant: Tenant;

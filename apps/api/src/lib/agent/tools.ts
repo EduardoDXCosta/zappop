@@ -1,5 +1,5 @@
-import type { AIToolDefinition, AIToolCall } from '@/lib/ai';
-import type { Tenant, Customer, CustomerAddress } from '@/db/types';
+import type { AIToolDefinition, AIToolCall } from '../ai/index.js';
+import type { Tenant, Customer, CustomerAddress } from '../../db/types.js';
 import {
     getCategoriesByTenant,
     getProductsByTenant,
@@ -7,8 +7,8 @@ import {
     getProductsByIds,
     createOrder,
     saveDefaultCustomerAddress,
-} from '@/db/queries';
-import { formatBRL, calculatePricing } from '@/lib/pricing';
+} from '../../db/queries/index.js';
+import { formatBRL, calculatePricing } from '../pricing.js';
 
 export const agentTools: AIToolDefinition[] = [
     {

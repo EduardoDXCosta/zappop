@@ -1,7 +1,7 @@
-import type { EvolutionIncomingMessage } from '@/lib/evolution';
-import { getEvolutionClient } from '@/lib/evolution';
-import type { AIMessage, AIProvider } from '@/lib/ai';
-import { getAIProvider } from '@/lib/ai';
+import type { EvolutionIncomingMessage } from '../evolution/index.js';
+import { getEvolutionClient } from '../evolution/index.js';
+import type { AIMessage, AIProvider } from '../ai/index.js';
+import { getAIProvider } from '../ai/index.js';
 import {
     getTenantBySlug,
     getTenantHours,
@@ -15,9 +15,9 @@ import {
     markCartOrdered,
     getActiveTakeover,
     releaseTakeover,
-} from '@/db/queries';
-import { isOpenNow, formatHoursHuman } from '@/lib/hours';
-import type { Tenant, Customer, CustomerAddress } from '@/db/types';
+} from '../../db/queries/index.js';
+import { isOpenNow, formatHoursHuman } from '../hours.js';
+import type { Tenant, Customer, CustomerAddress } from '../../db/types.js';
 import { buildSystemPrompt } from './prompt';
 import { agentTools, executeToolCall } from './tools';
 

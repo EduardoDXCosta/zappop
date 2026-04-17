@@ -1,14 +1,14 @@
-import type { Customer } from '@/db/types';
-import type { AIMessage } from '@/lib/ai';
-import type { IsOpenResult } from '@/lib/hours';
-import { getAIProvider } from '@/lib/ai';
+import type { Customer } from '../../db/types.js';
+import type { AIMessage } from '../ai/index.js';
+import type { IsOpenResult } from '../hours.js';
+import { getAIProvider } from '../ai/index.js';
 import {
     getTenantById,
     getTenantHours,
     appendChat,
     getRecentChats,
-} from '@/db/queries';
-import { formatHoursHuman } from '@/lib/hours';
+} from '../../db/queries/index.js';
+import { formatHoursHuman } from '../hours.js';
 import { buildSystemPrompt } from './prompt';
 import { agentTools, executeToolCall } from './tools';
 
