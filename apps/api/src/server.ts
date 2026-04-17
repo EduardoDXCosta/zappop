@@ -47,19 +47,21 @@ async function start() {
     // Health check
     app.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
 
+    const API_PREFIX = process.env.API_PREFIX || '';
+
     // Register route groups
-    await app.register(authRoutes, { prefix: '/auth' });
-    await app.register(webhookRoutes, { prefix: '/webhook' });
-    await app.register(menuRoutes, { prefix: '/menu' });
-    await app.register(onboardingRoutes, { prefix: '/onboarding' });
-    await app.register(adminRoutes, { prefix: '/admin' });
-    await app.register(evolutionRoutes, { prefix: '/evolution' });
-    await app.register(globalProductsRoutes, { prefix: '/global-products' });
-    await app.register(setupRoutes, { prefix: '/setup-admin' });
-    await app.register(takeoverRoutes, { prefix: '/takeover' });
-    await app.register(testChatRoutes, { prefix: '/test-chat' });
-    await app.register(cronRoutes, { prefix: '/cron' });
-    await app.register(uploadRoutes, { prefix: '/upload' });
+    await app.register(authRoutes, { prefix: `${API_PREFIX}/auth` });
+    await app.register(webhookRoutes, { prefix: `${API_PREFIX}/webhook` });
+    await app.register(menuRoutes, { prefix: `${API_PREFIX}/menu` });
+    await app.register(onboardingRoutes, { prefix: `${API_PREFIX}/onboarding` });
+    await app.register(adminRoutes, { prefix: `${API_PREFIX}/admin` });
+    await app.register(evolutionRoutes, { prefix: `${API_PREFIX}/evolution` });
+    await app.register(globalProductsRoutes, { prefix: `${API_PREFIX}/global-products` });
+    await app.register(setupRoutes, { prefix: `${API_PREFIX}/setup-admin` });
+    await app.register(takeoverRoutes, { prefix: `${API_PREFIX}/takeover` });
+    await app.register(testChatRoutes, { prefix: `${API_PREFIX}/test-chat` });
+    await app.register(cronRoutes, { prefix: `${API_PREFIX}/cron` });
+    await app.register(uploadRoutes, { prefix: `${API_PREFIX}/upload` });
 
     await app.listen({ port: PORT, host: HOST });
     app.log.info(`WhatsMenu API running on http://${HOST}:${PORT}`);
